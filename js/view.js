@@ -2,7 +2,10 @@ var HOUSESCALE = 20;
 var FOGRANGE = 7000;
 var CAMERARANGE = FOGRANGE*1.25;
 
-var DISTSCALE = 50/286; // correct for rendered (286) vs. subjective (50m) building height 
+var DEFBUILDINGHEIGHT = 50;
+var buildingheight = 286;
+var DISTSCALE = DEFBUILDINGHEIGHT/buildingheight; // correct for rendered (286) vs. subjective (50m) building height
+var buildingwidth = 150; 
 
 var loaded = false;
 var camera, scene, renderer, raycaster;
@@ -150,12 +153,12 @@ function getBoundingBox(obj) {
 	var minX = Infinity, minY = Infinity, minZ = Infinity;
 	var maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
 	
-	obj.traverse (function (mesh)
+	obj.traverse (function (msh)
     {
-        if (mesh instanceof THREE.Mesh)
+        if (msh instanceof THREE.Mesh)
         {
-            mesh.geometry.computeBoundingBox();
-            var bBox = mesh.geometry.boundingBox;
+            msh.geometry.computeBoundingBox();
+            var bBox = msh.geometry.boundingBox;
 
             // compute overall bbox
             minX = Math.min (minX, bBox.min.x);
@@ -197,9 +200,9 @@ function get3DText(str, zOffset, rotate) {
 	return text;
 }
 
-function addHouse(houselabel, hx, hy) {
+function addHouse(houselabel, hx, hy) { //hx and hy in m
 	house = houses[houselabel].clone();
-	house.position.set(hx, 0, hz);
+	house.position.set(hx / DISTSCALE, 0, hz / DISTSCALE); // convert between m and units
 	house.scale.set(HOUSESCALE, HOUSESCALE, HOUSESCALE);
 	bbox = getBoundingBox(house);
 	
@@ -214,8 +217,43 @@ function addHouse(houselabel, hx, hy) {
 	return house;
 }
 
+function getDistance(x1, x2, z1, z2) { // in m
+	//var x1 = o1.position.x, x2 = o2.position.x, z1 = o1.position.z, z2 = o2.position.z;
+	return Math.sqrt(Math.pow(x2-x1, 2) + Math.pow(z2-z1, 2));
+}
+
+function getEdgeDistance(o1, o2) { // in m
+	var x1 = o1.position.x, x2 = o2.position.x, z1 = o1.position.z, z2 = o2.position.z;
+	var l = buildingwidth / 2;
+	var v1 = [new THREE.Vector2(x1 + l, z1 + l), new THREE.Vector2(x1 + l, z1 - l), new THREE.Vector2(x1 - l, z1 + l), new THREE.Vector2(x1 - l, z1 - l)];
+	var v2 = [new THREE.Vector2(x2 + l, z2 + l), new THREE.Vector2(x2 + l, z2 - l), new THREE.Vector2(x2 - l, z2 + l), new THREE.Vector2(x2 - l, z2 - l)];
+	
+	var d = leastDistance(v1, v2)*DISTSCALE;
+	return d;
+	//return (Math.sqrt(Math.pow(dx, 2) + Math.pow(dz, 2))*DISTSCALE - buildingwidth*DISTSCALE);
+}
+
+function leastDistance(v1, v2) {
+	var mind = Infinity;
+	for (var i = 0; i < v1.length; i++) {
+		for (var j = 0; j < v2.length; j++) {
+			var d = Math.sqrt(Math.pow(v2[j].x-v1[i].x, 2)+Math.pow(v2[j].y-v1[i].y, 2));
+			if (d < mind) {
+				mind = d;
+			}
+		}
+	}
+	return mind;
+}
+
+
 function setHouseColor(o, r, g, b) {
-	o.children[0].children[1].material.color.setHex(0x0000ff);
+	if (g && b) 
+		o.children[0].children[1].material.color.setHex(65536*r+256*g+b);
+	else if (r)
+		o.children[0].children[1].material.color.setHex(r);
+	else
+		o.children[0].children[1].material.color.setHex(0xffffff);
 	/*for (var i in o.children) {
 		if (o.children[i].material)
 			o.children[i].material.ambient.setRGB(255, 0, 0);
@@ -267,7 +305,7 @@ if ( havePointerLock ) {
 		if ( document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element ) {
 			controls.enabled = true;
 			blocker.style.display = 'none';
-			controls.setDirection( Math.PI*0.75, 0, 0 );
+			controls.setDirection( 0, 0, 0 );
 		} else {
 			controls.enabled = false;
 			blocker.style.display = '-webkit-box';
