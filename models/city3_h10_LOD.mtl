@@ -1,0 +1,9 @@
+# MTL written from E:\3d\3D-Objekte\city\city3\meshes\city3_h10_LOD.obj
+newmtl city6
+Kd 1 1 1
+Ns 256
+d 1
+illum 1
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+map_Kd city6.png

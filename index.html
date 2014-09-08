@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Spatial Memory Experiment</title>
+  <script src="jquery-1.7.2.min.js"></script>
+  <script src="three.min.js"></script>
+  <script src="stats.min.js"></script>
+  <script src="PointerLockControls.js"></script>
+  <script src="MTLLoader.js"></script>
+  <script src="OBJMTLLoader.js"></script>
+  <script src="fonts/helvetiker_regular.typeface.js"></script>
+  
+  <link rel="stylesheet" type="text/css" href="css/main.css">
+</head>
+<body>
+		<div id="blocker">
+			<div id="instructions_center">
+				<div id="loader" style="font-size:40px">Loading (<span id="progress">0</span>%)...</div>
+				<div id="starter" style="display:none;">
+					<span style="font-size:40px">Click to start</span>
+					<br />
+					(W, A, S, D = Move, MOUSE = Look around)
+					<br /><br/>
+					Hit Esc to pause
+					<br/><br/>
+					<b>Best viewed (fastest) in Google Chrome</b>
+				</div>
+			</div>
+		</div>
+		
+		<div id="feedback_box">
+			Congrats!
+		</div>
+		
+		<div id="sidebar">
+			<h3 align="center">Experiment <span id="expno">1</span> / <span id="max_expno">1</span></h2>
+			<h4 align="center">Task <span id="taskno">1</span> / <span id="max_taskno">1</span></h2>
+				<p align="justify">
+				Distance: <input id="distance" size="8"/> m
+				<span id="distlabel"></span>
+			</p>
+			<p align="justify">
+				<b><u>Instructions:</u></b>
+				<div id="instructions_exp0" class="hidden"></div>
+				<div id="instructions_exp1" class="hidden">
+					Please take a look a the two buildings in the environment, 
+					and then  <b>estimate the distance between them</b>.<br/><br/>
+					Please enter your estimated distance and press then press "Enter".<br/><br/>
+					You will be told the correct distance only the first 5 times.
+				</div>
+				<div id="instructions_exp2" class="hidden">exp2
+				</div>
+				<div id="instructions_exp3" class="hidden">exp3
+				</div>
+				<div id="instructions_exp4" class="hidden">exp4
+				</div>
+			</p>
+			
+			<p align="justify" id="controls">
+				<b><u>Controls:</u></b><br/>
+				<img class="float" src="img/controls_small.png" width="100" alt="move: W A S D; deliver: E. use the mouse too look around"/>
+				<img style="margin:10px" class="float" src="img/buildingheight.png" width="100" alt="buildings are 50m high"/>
+				<span class="clear">
+					<small><i>
+					Press <b>W, A, S, D</b> to move; <br/>
+					Press <b>E</b> <u>near a building</u> to deliver;<br/>
+					Number keys (0-9) to enter distance.<br/>
+					All buildings are <b>50m</b> high<br/>
+					(Press <b>Esc</b> to pause)
+					</i></small>
+				</span>
+			</p>
+		</div>
+		
+		<script src="js/experiment.js"></script>
+		<script src="js/view.js"></script>
+</body>
+</html>
