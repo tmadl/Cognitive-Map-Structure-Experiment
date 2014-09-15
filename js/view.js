@@ -200,60 +200,20 @@ function get3DText(str, zOffset, rotate) {
 	return text;
 }
 
-function addHouse(houselabel, hx, hy) { //hx and hy in m
-	house = houses[houselabel].clone();
-	house.position.set(hx / DISTSCALE, 0, hz / DISTSCALE); // convert between m and units
-	house.scale.set(HOUSESCALE, HOUSESCALE, HOUSESCALE);
-	bbox = getBoundingBox(house);
-	
-	var text1 = get3DText(houselabel, (bbox.max.z-bbox.min.z)/2);
-	house.add(text1);
-	var text2 = get3DText(houselabel, bbox.min.z-0.01, Math.PI);
-	house.add(text2);
-	
-	scene.add(house);
-	objects.push(house);
-	
-	return house;
-}
-
-function getDistance(x1, x2, z1, z2) { // in m
-	//var x1 = o1.position.x, x2 = o2.position.x, z1 = o1.position.z, z2 = o2.position.z;
-	return Math.sqrt(Math.pow(x2-x1, 2) + Math.pow(z2-z1, 2));
-}
-
-function getEdgeDistance(o1, o2) { // in m
-	var x1 = o1.position.x, x2 = o2.position.x, z1 = o1.position.z, z2 = o2.position.z;
-	var l = buildingwidth / 2;
-	var v1 = [new THREE.Vector2(x1 + l, z1 + l), new THREE.Vector2(x1 + l, z1 - l), new THREE.Vector2(x1 - l, z1 + l), new THREE.Vector2(x1 - l, z1 - l)];
-	var v2 = [new THREE.Vector2(x2 + l, z2 + l), new THREE.Vector2(x2 + l, z2 - l), new THREE.Vector2(x2 - l, z2 + l), new THREE.Vector2(x2 - l, z2 - l)];
-	
-	var d = leastDistance(v1, v2)*DISTSCALE;
-	return d;
-	//return (Math.sqrt(Math.pow(dx, 2) + Math.pow(dz, 2))*DISTSCALE - buildingwidth*DISTSCALE);
-}
-
-function leastDistance(v1, v2) {
-	var mind = Infinity;
-	for (var i = 0; i < v1.length; i++) {
-		for (var j = 0; j < v2.length; j++) {
-			var d = Math.sqrt(Math.pow(v2[j].x-v1[i].x, 2)+Math.pow(v2[j].y-v1[i].y, 2));
-			if (d < mind) {
-				mind = d;
-			}
-		}
-	}
-	return mind;
-}
-
 
 function setHouseColor(o, r, g, b) {
-	if (g && b) 
+	if (g && b) { 
 		o.children[0].children[1].material.color.setHex(65536*r+256*g+b);
-	else if (r)
-		o.children[0].children[1].material.color.setHex(r);
-	else
+	}
+	else if (r) {
+		if (typeof r == "number")
+			o.children[0].children[1].material.color.setHex(r);
+		else 
+			o.children[0].children[1].material.color.setHex(65536*r[0]+256*r[1]+r[2]);
+	}
+	else {
 		o.children[0].children[1].material.color.setHex(0xffffff);
+	}
 	/*for (var i in o.children) {
 		if (o.children[i].material)
 			o.children[i].material.ambient.setRGB(255, 0, 0);
