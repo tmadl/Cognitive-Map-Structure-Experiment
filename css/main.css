@@ -54,10 +54,10 @@ body {
 	position:absolute;
 	right: 0px; 
 	height: 100%;
-	width: 200px;
-	padding: 20px;
+	width: 220px;
+	padding: 10px;
 	color: #ffffff;
-	background-color: rgba(0, 0, 0, 0.3);
+	background-color: rgba(0, 0, 0, 0.4);
 }
 
 #controls {
@@ -74,7 +74,7 @@ body {
 	margin-left: -200px;
 	margin-top: -100px;
 	color: #ffffff;
-	background-color: rgba(0, 0, 0, 0.3);
+	background-color: rgba(30, 30, 30, 0.3);
 	padding: 30px;
 	display: none;
 }
@@ -99,4 +99,25 @@ body {
 	position:absolute;
 	height:2px;
 	width:2px;
+}
+
+.dotlabel {
+	position:absolute;
+	font-size: 8px;
+}
+
+#distest {
+	color: #ddeeff;
+	font-size: 13px;
+	background-color: rgba(0, 0, 0, 0.3);
+	padding: 4px;
+}
+
+#distest input {
+	background: #ddeeff;
+}
+
+#from, #to {
+	font-weight: bold;
+	text-decoration: underline;
 }

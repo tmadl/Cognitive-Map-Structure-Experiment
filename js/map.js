@@ -1,10 +1,24 @@
+var DEFAULTDIST = 250;
+var MAXGROUPSIZE = 400, MINGROUPSIZE = 200, MINGROUPDIST = 300;
+
+var function_names = ["Customer", "Restaurant", "Gas Station", "Tuning Shop"];
+
 Map = function() {
-	var DEFAULTDIST = 250;
-	var MINDIST = BUILDINGWIDTH*2;
+	this.building_coords=[];
+	this.cluster_ids=[];
+	this.clusters = 0;
+	this.labels=[];
 	
-	var MAXGROUPSIZE = 400, MINGROUPSIZE = 200;
+	this.getIdsByCluster = function(cluster) {
+		var ids = [];
+		for (var i = 0; i < this.cluster_ids.length; i++) {
+			if (this.cluster_ids[i] == cluster)
+				ids.push(i);
+		}
+		return ids;
+	};
 	
-	var rndpos = function(maxd, mind) {
+	var randomDist = function(maxd, mind) {
 		if (!maxd) maxd = DEFAULTDIST;
 		if (!mind) mind = 0; //-maxd;
 		return Math.random()*(maxd - mind) + mind;
@@ -15,123 +29,121 @@ Map = function() {
 	};
 	
 	this.randomMap = function(n) {
-		var coords = [];
+		this.building_coords = [];
 		for (var i=0; i<n; i++) {
-			var pos = rndNotTooClose(coords, function() {return rndpos(DEFAULTDIST*2);});
-			coords.push([pos[0], pos[1]]);
+			var pos = rndNotTooClose(this.building_coords, function() {return randomDist(DEFAULTDIST*2);});
+			this.building_coords.push([pos[0], pos[1]]);
+			this.cluster_ids.push(0);
 		}
-		this.generateMap(coords);
-		return coords;
+		this.renderMap(this.building_coords);
+		return [this.building_coords, null];
 	};
 
-	this.groupedMap = function(n, groups) {
-		var coords = [], colors = [];
+	this.groupedMap = function(groups, by_function) {
+		var BUILDINGS = 7;
+		
+		this.clusters = groups;
+		this.building_coords = [];
+		this.cluster_ids = [];
 		var mu = new Array(groups), sigma = new Array(groups);
 		for (var i=0; i<groups; i++) {
-			var pos = rndNotTooClose(mu, rndpos, rndpos, MINGROUPSIZE);
+			var pos = rndNotTooClose(mu, randomDist, randomDist, MINGROUPDIST);
 			mu[i] = [pos[0], pos[1]];
-			sigma[i] = [rndpos(MAXGROUPSIZE, MINGROUPSIZE), rndpos(MAXGROUPSIZE, MINGROUPSIZE)];
+			sigma[i] = [randomDist(MAXGROUPSIZE, MINGROUPSIZE), randomDist(MAXGROUPSIZE, MINGROUPSIZE)];
 		}
 
 		var permuted_id = [];
-		for (var i=0; i<9; i++) {
+		for (var i=0; i<BUILDINGS; i++) {
 			permuted_id.push(i);
 		}
 		permuted_id = permuted_id.sort(function(a,b) {return Math.random()*2-1;});
-		for (var i=0; i<n; i++) {
+		
+		var colors = [], functions = [];
+		for (var i=0; i<BUILDINGS; i++) {
 			var group = permuted_id[i]%groups; 
 			var c = 0xffffff;
 			
-			var pos = rndNotTooClose(coords, function() {return normal_random(mu[group][0], sigma[group][0]);}, function() {return normal_random(mu[group][1], sigma[group][1]);});
-			coords.push([pos[0], pos[1]]);
-			colors.push(c);
+			var pos = rndNotTooClose(this.building_coords, function() {return normal_random(mu[group][0], sigma[group][0]);}, function() {return normal_random(mu[group][1], sigma[group][1]);});
+			this.building_coords.push([pos[0], pos[1]]);
+			this.cluster_ids.push(group);
+			
+			if (by_function)
+				functions.push(function_names[permuted_id[i]%function_names.length]);
+			else
+				colors.push(c);
 		}
-		this.generateMap(coords, colors);
+		//this.renderMap(this.building_coords, colors, functions);
+		this.renderMap(this.building_coords, colors);
 		
 		//
 		for (var i=0; i<groups; i++) {
-			this.addClusterToMinimap([mu[i][0], mu[i][1], sigma[i][0], sigma[i][1]]);
+			this.renderClusterInMinimap([mu[i][0], mu[i][1], sigma[i][0], sigma[i][1]]);
 		}
 		//
 		
-		return coords;
+		return [this.building_coords, this.cluster_ids];
 	};
 	
-	this.equidistantMap = function() {
-		var coords = [], colors = [];
-		var d = MINDIST + Math.random()*DEFAULTDIST;
+	this.equidistantMap = function(groups) {
+		var BUILDINGS = 7, gridsize = 3;
+		
+		this.clusters = groups;
+		this.building_coords = [];
+		this.cluster_ids = [];
+		
+		var d = MINDIST*2 + Math.random()*DEFAULTDIST;
+		
+		var clid_matrix = rndGridClusters(gridsize, groups);
+		var color_array = groups ? rndColors(groups) : [0xffffff];
+		var colors = [];
 		
 		for (var i=0; i<9; i++) {
-			var hx = Math.floor(i/3) * d;
-			var hy = (i%3) * d;
-			var c = 0xffffff;
+			if (i==0 || i==2) continue;
+			
+			var xi = Math.floor(i/gridsize), yi = (i%gridsize);
+			//var hx = xi * d, hy = yi * d; // rectangular
+			var hx = xi * d + (yi%2)*d/2, hy = yi * d * Math.sqrt(3)/2; // triangular grid
+			var clid = clid_matrix[xi][yi]; 
+			var c = color_array[clid];
 
-			coords.push([hx, hy]);
+			this.building_coords.push([hx, hy]);
 			colors.push(c);
+			this.cluster_ids.push(clid);
 		}
-		this.generateMap(coords, colors);
-		return coords;
+		this.renderMap(this.building_coords, colors);
+		
+		return [this.building_coords, this.cluster_ids];
 	};
 
-	this.generateMap = function(coords, colors) {
-		this.clearMap();
+	this.renderMap = function(coords, colors, functions) {
 		for (var i = 0; i < coords.length; i++) {
-			var house = addHouse(defaulthouse, coords[i][0], coords[i][1]);
+			var f = functions ? functions[i] : ("Building "+(i+1));
+			this.labels.push(f);
 			if (colors) {
-				setHouseColor(house, colors[i]);
+				addHouse(f, coords[i][0], coords[i][1], colors[i]);
+			}
+			else {
+				addHouse(f, coords[i][0], coords[i][1]);				
 			}
 		}
-		this.generateMinimap(coords, colors);
-		////data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_coords = coords;
+		this.renderMinimap(coords, colors);
 		return coords;
 	};
 	
-	var tooClose = function(coords, nx, ny, mind) {
-		if (!mind) mind = MINDIST;
-		for (var i = 0; i < coords.length; i++) {
-			if (coords[i] && coords[i][0] && getDistance(coords[i][0], coords[i][1], nx, ny) < mind) {
-				return true;
-			}
-		}
-		return false;
-	};
-	var rndNotTooClose = function(coords, rndFunctionX, rndFunctionY, mind) {
-		if (!rndFunctionY) rndFunctionY = rndFunctionX;
-		var maxtries = 1000;
-		var j = 0;
-		var x = 0,y;
-		do {
-			x = rndFunctionX();
-			y = rndFunctionY();
-		} while(tooClose(coords, x, y, mind) && j++ < maxtries);
-		if (j>=maxtries) {
-			//alert("Error: buildings too close!");
-			var maxx = -Infinity, maxy = -Infinity;
-			for (var i=0; i<coords.length; i++) {
-				if (coords[i]) {
-					if (coords[i][0]>maxx) maxx=coords[i][0];
-					if (coords[i][1]>maxy) maxy=coords[i][1];
-				}
-			}
-			x = maxx+mind/Math.sqrt(2);
-			y = maxy+mind/Math.sqrt(2);
-		}
-		return [x, y];
-	};
-	
-	
-	this.generateMinimap = function(coords, colors) {
+	this.renderMinimap = function(coords, colors) {
 		var html = "";
 		for (var i = 0; i < objects.length; i++) {
 			var c = minimapCoords([objects[i].position.x, objects[i].position.z]);
-			var col = colors ? colors[i].toString(16) : "ffffff";
-			html += "<div class='dot' style='left:"+c[0]+"px;top:"+c[1]+"px;height:"+c[2]+"px;width:"+c[3]+"px;background:#"+col+"'></div>";
+			var col = colors && colors[i] ? colors[i].toString(16) : "ffffff";
+			while (col.length < 6) col += "0";
+			html += "<div class='dot' style='left:"+c[0]+"px;top:"+c[1]+"px;height:"+c[2]+"px;width:"+c[3]+"px;background:#"+col+"' title='"+this.labels[i]+"'></div>";
+			html += "<div class='dotlabel' style='left:"+(c[0]+3)+"px;top:"+c[1]+"px;color:#"+col+"' title='"+this.labels[i]+"'>"+(i+1)+"</div>";
 		}
 		var c = minimapCoords([controls.getObject().position.x, controls.getObject().position.z]);
 		html += "<div id='me' class='dot' style='left:"+c[0]+"px;top:"+c[1]+"px;border:1px solid red;'></div>";
 		$("#minimap").html(html);
 	};
-	this.addClusterToMinimap = function(c) {
+	this.renderClusterInMinimap = function(c) {
 		for (var i=0; i<c.length; i++) c[i]/=DISTSCALE;
 		c[0]-=c[2]/2;
 		c[1]-=c[3]/2;
@@ -153,6 +165,9 @@ Map = function() {
 		while (objects.length > 0) {
 			objects.pop();
 		}
+		
+		this.building_coords=[];
+		this.cluster_ids=[];
 	};
 };
 
@@ -162,32 +177,35 @@ function minimapCoords(c) {
 	if (c.length < 4) {
 		c[2] = c[3] = buildingwidthpx;
 	}
-	var M=3;
+	var M=2;
 	return [Math.round(c[0]*MINIMAPSIZE/FOGRANGE*M+5), Math.round(c[1]*MINIMAPSIZE/FOGRANGE*M+5), Math.round(c[2]*MINIMAPSIZE/FOGRANGE*M), Math.round(c[3]*MINIMAPSIZE/FOGRANGE*M)];
 }
 
 function addHouse(houselabel, hx, hz, color) { //hx and hz in m
-	house = houses[houselabel].clone();
-	house.position.set(hx / DISTSCALE, 0, hz / DISTSCALE); // convert between m and units
-	house.scale.set(HOUSESCALE, HOUSESCALE, HOUSESCALE);
-	bbox = getBoundingBox(house);
+	var chouse = houses[defaulthouse].clone();
+	chouse.children[0].children[1].material = chouse.children[0].children[1].material.clone(); //otherwise houses share material
 	
-	//var lbl = houselabel;
-	var lbl = "obj"+objects.length;
+	chouse.position.set(hx / DISTSCALE, 0, hz / DISTSCALE); // convert between m and units
+	chouse.scale.set(HOUSESCALE, HOUSESCALE, HOUSESCALE);
+	bbox = getBoundingBox(chouse);
+	
+	var lbl = houselabel;
 	var text1 = get3DText(lbl, (bbox.max.z-bbox.min.z)/2);
-	house.add(text1);
+	chouse.add(text1);
 	var text2 = get3DText(lbl, bbox.min.z-0.01, Math.PI);
-	house.add(text2);
+	chouse.add(text2);
 	
 	if (color) {
-		setHouseColor(house, color);
+		setHouseColor(chouse, color);
 	}
 	
-	scene.add(house);
-	objects.push(house);
+	scene.add(chouse);
+	objects.push(chouse);
 	
-	return house;
+	return chouse;
 }
+
+// distance helper functions
 
 function getDistance(x1, z1, x2, z2) { 
 	//var x1 = o1.position.x, x2 = o2.position.x, z1 = o1.position.z, z2 = o2.position.z;
@@ -218,6 +236,108 @@ function leastDistance(v1, v2) {
 	return mind;
 }
 
+// helper functions for generating random positions, clusters, and colors
+
+var tooClose = function(coords, nx, ny, mind) {
+	if (!mind) mind = MINDIST;
+	for (var i = 0; i < coords.length; i++) {
+		if (coords[i] && coords[i][0] && getDistance(coords[i][0], coords[i][1], nx, ny) < mind) {
+			return true;
+		}
+	}
+	return false;
+};
+var rndNotTooClose = function(coords, rndFunctionX, rndFunctionY, mind) {
+	if (!rndFunctionY) rndFunctionY = rndFunctionX;
+	var maxtries = 1000;
+	var j = 0;
+	var x = 0,y;
+	do {
+		x = rndFunctionX();
+		y = rndFunctionY();
+	} while(tooClose(coords, x, y, mind) && j++ < maxtries);
+	if (j>=maxtries) {
+		//alert("Error: buildings too close!");
+		var maxx = -Infinity, maxy = -Infinity;
+		for (var i=0; i<coords.length; i++) {
+			if (coords[i]) {
+				if (coords[i][0]>maxx) maxx=coords[i][0];
+				if (coords[i][1]>maxy) maxy=coords[i][1];
+			}
+		}
+		x = maxx+mind/Math.sqrt(2);
+		y = maxy+mind/Math.sqrt(2);
+	}
+	return [x, y];
+};
+
+var rndGridClusters = function(gridsize, no_clusters) {
+	var cmap = [];
+	for (var i=0; i<gridsize; i++) {
+		cmap[i]=[];
+		for (var j=0; j<gridsize; j++) {
+			cmap[i][j]=0;
+		}	
+	}
+	
+	if (!no_clusters) return cmap;
+	
+	var S = 2;
+	var xs = Math.round(Math.random()*(gridsize - S));
+	var ys = Math.round(Math.random()*(gridsize - S));
+	for (var i=0; i<gridsize; i++) {
+		for (var j=0; j<gridsize; j++) {
+			if (i >= xs && i < xs+S && j >= ys && j < ys+S) cmap[i][j]=1;
+			//else {
+			//	cmap[i][j]=2+Math.round(Math.random()*(no_clusters-2));
+			//}
+		}
+	}
+	return cmap;
+};
+
+//var coldist = function(col1, col2) {
+var moddist = function(c1, c2) {
+	return Math.min((c1-c2+256)%256, (c2-c1+256)%256);
+};
+var coldist = function(r1, g1, b1, r2, g2, b2) {
+	//var r1=Math.floor(col1/65536), g1=Math.floor(col1/256)%256, b1=col1%256;
+	//var r2=Math.floor(col2/65536), g2=Math.floor(col2/256)%256, b2=col2%256;
+	return Math.sqrt(Math.pow(moddist(r1, r2), 2) + Math.pow(moddist(g1, g2), 2) + Math.pow(moddist(b1, b2), 2));
+};
+
+var mincoldist = function(rgbs, r, g, b) {
+	var mind = Infinity;
+	var rgbs2 = rgbs;
+	//rgbs2.push([255, 255, 255]);
+	for (var i=0; i<rgbs2.length; i++) {
+		var d = coldist(rgbs2[i][0], rgbs2[i][1], rgbs2[i][2], r, g, b);
+		if (d < mind) mind = d;
+	}
+	return mind;
+};
+
+var rndColors = function(n) {
+	var MINDIST = 150;
+	var rgbs = [];
+	var colors = [];
+	var maxtries = 1000;
+	for (var i=0; i<n; i++) {
+		var r, g, b;
+		var j=0;
+		do {
+			r = Math.floor(Math.random()*256);
+			g = Math.floor(Math.random()*256);
+			b = Math.floor(Math.random()*256);
+		} while (mincoldist(rgbs, r, g, b) < MINDIST && j++ < maxtries);
+		rgbs.push([r, g, b]);
+		colors.push(65536*r+256*g+b);
+	}
+	return colors; 
+};
+
+
+// random
 
 function normal_random(mean, variance) {
     if (mean == undefined)
@@ -225,6 +345,7 @@ function normal_random(mean, variance) {
     if (variance == undefined)
         variance = 1.0;
     var V1, V2, S;
+    var j = 0;
     do {
         var U1 = Math.random();
         var U2 = Math.random();

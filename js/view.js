@@ -7,6 +7,12 @@ var buildingheightpx = 286;
 var DISTSCALE = DEFBUILDINGHEIGHT/buildingheightpx; // correct for rendered (286) vs. subjective (50m) building height
 var buildingwidthpx = 150; 
 var BUILDINGWIDTH = buildingwidthpx * DISTSCALE;
+var MINDIST = BUILDINGWIDTH*2; //minimum building distance
+
+var houselabels = ['Apartments', 'Office highrise'];
+var defaulthouse = houselabels[0];
+var housenames = ['city3_h9_LOD', 'city3_h10_LOD'];
+var modelpath = 'models/';
 
 var MINIMAPSIZE = 100.0;
 
@@ -187,7 +193,7 @@ function get3DText(str, zOffset, rotate) {
 	if (!rotate) rotate = 0;
 	
 	var text3d = new THREE.TextGeometry( str, {
-		size: 0.5,
+		size: 0.7,
 		height: 0,
 		curveSegments: 2,
 		font: "helvetiker"
