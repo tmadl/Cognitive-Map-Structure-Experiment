@@ -2,12 +2,12 @@ Map = function() {
 	var DEFAULTDIST = 250;
 	var MINDIST = BUILDINGWIDTH*2;
 	
-	var MAXGROUPSIZE = 100, MINGROUPSIZE = 100;
+	var MAXGROUPSIZE = 400, MINGROUPSIZE = 200;
 	
 	var rndpos = function(maxd, mind) {
 		if (!maxd) maxd = DEFAULTDIST;
-		if (!mind) mind = -maxd;
-		return Math.random()*maxd*2 - mind;
+		if (!mind) mind = 0; //-maxd;
+		return Math.random()*(maxd - mind) + mind;
 	};
 	
 	this.getDistance = function(fromId, toId) {
@@ -17,12 +17,8 @@ Map = function() {
 	this.randomMap = function(n) {
 		var coords = [];
 		for (var i=0; i<n; i++) {
-			hx = hz = 0;
-			while (hx == 0 || i == 1 && getDistance(hx, hz, objects[objects.length-1].position.x, objects[objects.length-1].position.z) < buildingwidthpx*2) {
-				hx = rndpos();
-				hz = rndpos();
-			}
-			coords.push([hx, hz]);
+			var pos = rndNotTooClose(coords, function() {return rndpos(DEFAULTDIST*2);});
+			coords.push([pos[0], pos[1]]);
 		}
 		this.generateMap(coords);
 		return coords;
@@ -32,17 +28,22 @@ Map = function() {
 		var coords = [], colors = [];
 		var mu = new Array(groups), sigma = new Array(groups);
 		for (var i=0; i<groups; i++) {
-			mu[i] = [rndpos(), rndpos()];
-			sigma[i] = [rndpos(MAXGROUPSIZE, 0), rndpos(MAXGROUPSIZE, 0)];
+			var pos = rndNotTooClose(mu, rndpos, rndpos, MINGROUPSIZE);
+			mu[i] = [pos[0], pos[1]];
+			sigma[i] = [rndpos(MAXGROUPSIZE, MINGROUPSIZE), rndpos(MAXGROUPSIZE, MINGROUPSIZE)];
 		}
 
+		var permuted_id = [];
 		for (var i=0; i<9; i++) {
-			var group = Math.floor(Math.random()*groups); 
-			var hx = normal_random(mu[group][0], sigma[group][0]);
-			var hy = normal_random(mu[group][1], sigma[group][1]);
+			permuted_id.push(i);
+		}
+		permuted_id = permuted_id.sort(function(a,b) {return Math.random()*2-1;});
+		for (var i=0; i<n; i++) {
+			var group = permuted_id[i]%groups; 
 			var c = 0xffffff;
-
-			coords.push([hx, hy]);
+			
+			var pos = rndNotTooClose(coords, function() {return normal_random(mu[group][0], sigma[group][0]);}, function() {return normal_random(mu[group][1], sigma[group][1]);});
+			coords.push([pos[0], pos[1]]);
 			colors.push(c);
 		}
 		this.generateMap(coords, colors);
@@ -85,11 +86,46 @@ Map = function() {
 		return coords;
 	};
 	
+	var tooClose = function(coords, nx, ny, mind) {
+		if (!mind) mind = MINDIST;
+		for (var i = 0; i < coords.length; i++) {
+			if (coords[i] && coords[i][0] && getDistance(coords[i][0], coords[i][1], nx, ny) < mind) {
+				return true;
+			}
+		}
+		return false;
+	};
+	var rndNotTooClose = function(coords, rndFunctionX, rndFunctionY, mind) {
+		if (!rndFunctionY) rndFunctionY = rndFunctionX;
+		var maxtries = 1000;
+		var j = 0;
+		var x = 0,y;
+		do {
+			x = rndFunctionX();
+			y = rndFunctionY();
+		} while(tooClose(coords, x, y, mind) && j++ < maxtries);
+		if (j>=maxtries) {
+			//alert("Error: buildings too close!");
+			var maxx = -Infinity, maxy = -Infinity;
+			for (var i=0; i<coords.length; i++) {
+				if (coords[i]) {
+					if (coords[i][0]>maxx) maxx=coords[i][0];
+					if (coords[i][1]>maxy) maxy=coords[i][1];
+				}
+			}
+			x = maxx+mind/Math.sqrt(2);
+			y = maxy+mind/Math.sqrt(2);
+		}
+		return [x, y];
+	};
+	
+	
 	this.generateMinimap = function(coords, colors) {
 		var html = "";
 		for (var i = 0; i < objects.length; i++) {
 			var c = minimapCoords([objects[i].position.x, objects[i].position.z]);
-			html += "<div class='dot' style='left:"+c[0]+"px;top:"+c[1]+"px;height:"+c[2]+"px;width:"+c[3]+"px;background:#"+colors[i].toString(16)+"'></div>";
+			var col = colors ? colors[i].toString(16) : "ffffff";
+			html += "<div class='dot' style='left:"+c[0]+"px;top:"+c[1]+"px;height:"+c[2]+"px;width:"+c[3]+"px;background:#"+col+"'></div>";
 		}
 		var c = minimapCoords([controls.getObject().position.x, controls.getObject().position.z]);
 		html += "<div id='me' class='dot' style='left:"+c[0]+"px;top:"+c[1]+"px;border:1px solid red;'></div>";
@@ -126,7 +162,8 @@ function minimapCoords(c) {
 	if (c.length < 4) {
 		c[2] = c[3] = buildingwidthpx;
 	}
-	return [Math.round(c[0]*MINIMAPSIZE/FOGRANGE+5), Math.round(c[1]*MINIMAPSIZE/FOGRANGE+5), Math.round(c[2]*MINIMAPSIZE/FOGRANGE), Math.round(c[3]*MINIMAPSIZE/FOGRANGE)];
+	var M=3;
+	return [Math.round(c[0]*MINIMAPSIZE/FOGRANGE*M+5), Math.round(c[1]*MINIMAPSIZE/FOGRANGE*M+5), Math.round(c[2]*MINIMAPSIZE/FOGRANGE*M), Math.round(c[3]*MINIMAPSIZE/FOGRANGE*M)];
 }
 
 function addHouse(houselabel, hx, hz, color) { //hx and hz in m
@@ -152,14 +189,14 @@ function addHouse(houselabel, hx, hz, color) { //hx and hz in m
 	return house;
 }
 
-function getDistance(x1, x2, z1, z2) { // in m
+function getDistance(x1, z1, x2, z2) { 
 	//var x1 = o1.position.x, x2 = o2.position.x, z1 = o1.position.z, z2 = o2.position.z;
 	return Math.sqrt(Math.pow(x2-x1, 2) + Math.pow(z2-z1, 2));
 }
 
 function getEdgeDistance(o1, o2) { // in m
 	var x1 = o1.position.x, x2 = o2.position.x, z1 = o1.position.z, z2 = o2.position.z;
-	var l = buildingwidth / 2;
+	var l = buildingwidthpx / 2;
 	var v1 = [new THREE.Vector2(x1 + l, z1 + l), new THREE.Vector2(x1 + l, z1 - l), new THREE.Vector2(x1 - l, z1 + l), new THREE.Vector2(x1 - l, z1 - l)];
 	var v2 = [new THREE.Vector2(x2 + l, z2 + l), new THREE.Vector2(x2 + l, z2 - l), new THREE.Vector2(x2 - l, z2 + l), new THREE.Vector2(x2 - l, z2 - l)];
 	

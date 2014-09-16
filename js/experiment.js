@@ -26,7 +26,7 @@ Experiment = function() {
 	data.DISTSCALE = DISTSCALE;
 	
 	var exp_properties = {};
-	exp_properties.expno = 1; //0!
+	exp_properties.expno = 1; //0!!!
 	exp_properties.max_expno = 2;
 	
 	var distanceEstimation = {from: -1, to: -1, dist: -1};
@@ -62,7 +62,7 @@ Experiment = function() {
 		
 		// generate and store maps of experiment 2
 		// if (condition==2) {
-		if (Math.round(Math.random())) {
+		if (1) {
 			var groups = 2 + Math.round(Math.random()); // 2 or 3 groups
 			coords = map.groupedMap(BUILDINGS, groups);
 		}
@@ -126,6 +126,10 @@ Experiment = function() {
 	this.run = function() {
 		nextExperiment();
 	};
+	
+	this.getData = function() {
+		return data;
+	};
 	 
 	this.onEnter = function() {
 		//participant pressed enter; record distance estimate
@@ -143,7 +147,7 @@ Experiment = function() {
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_distances.push(reald);
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].estimated_distances.push(est);
 			
-			showDistance(reald, est);
+			showDistance(est, reald);
 			
 			//nextTask();
 			experiment["exp"+exp_properties.expno+"judged"]();
