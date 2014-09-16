@@ -1,11 +1,14 @@
 var HOUSESCALE = 20;
 var FOGRANGE = 7000;
-var CAMERARANGE = FOGRANGE*1.25;
+var CAMERARANGE = FOGRANGE*1.5;
 
 var DEFBUILDINGHEIGHT = 50;
-var buildingheight = 286;
-var DISTSCALE = DEFBUILDINGHEIGHT/buildingheight; // correct for rendered (286) vs. subjective (50m) building height
-var buildingwidth = 150; 
+var buildingheightpx = 286;
+var DISTSCALE = DEFBUILDINGHEIGHT/buildingheightpx; // correct for rendered (286) vs. subjective (50m) building height
+var buildingwidthpx = 150; 
+var BUILDINGWIDTH = buildingwidthpx * DISTSCALE;
+
+var MINIMAPSIZE = 100.0;
 
 var loaded = false;
 var camera, scene, renderer, raycaster;
@@ -16,7 +19,7 @@ onerror = function(err) {alert(err);};
 
 function setupScene() {
 
-	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, CAMERARANGE );
+	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, CAMERARANGE );
 
 	scene = new THREE.Scene();
 	scene.fog = new THREE.Fog( 0xffffff, 0, FOGRANGE );
@@ -30,7 +33,7 @@ function setupScene() {
 	raycaster = new THREE.Raycaster( new THREE.Vector3(), new THREE.Vector3( 0, - 1, 0 ), 0, 10 );
 
 	// floor
-	geometry = new THREE.PlaneGeometry( 10000, 10000, 100, 100 );
+	geometry = new THREE.PlaneGeometry( 15000, 15000, 100, 100 );
 	geometry.applyMatrix( new THREE.Matrix4().makeRotationX( - Math.PI / 2 ) );
 	material = new THREE.MeshBasicMaterial( { color: 0xAAAA99 } );
 		/*texture = THREE.ImageUtils.loadTexture( "models/asphalt.png" );
@@ -82,6 +85,9 @@ function animate() {
 	stats.update();
 
 	renderer.render( scene, camera );
+	
+	if (experiment)
+		experiment.update();
 }
 
 function detectCollision() {

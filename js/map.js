@@ -1,33 +1,39 @@
 Map = function() {
-	var DEFAULTDIST = 200;
+	var DEFAULTDIST = 250;
+	var MINDIST = BUILDINGWIDTH*2;
 	
-	var rndist = function(maxd) {
+	var MAXGROUPSIZE = 100, MINGROUPSIZE = 100;
+	
+	var rndpos = function(maxd, mind) {
 		if (!maxd) maxd = DEFAULTDIST;
-		return Math.random()*maxd*2 - maxd;
+		if (!mind) mind = -maxd;
+		return Math.random()*maxd*2 - mind;
+	};
+	
+	this.getDistance = function(fromId, toId) {
+		return Math.round(getEdgeDistance(objects[0], objects[1]));
 	};
 	
 	this.randomMap = function(n) {
 		var coords = [];
 		for (var i=0; i<n; i++) {
 			hx = hz = 0;
-			while (hx == 0 || i == 1 && getDistance(hx, hz, objects[objects.length-1].position.x, objects[objects.length-1].position.z) < buildingwidth*2) {
-				hx = rndist();
-				hz = rndist();
+			while (hx == 0 || i == 1 && getDistance(hx, hz, objects[objects.length-1].position.x, objects[objects.length-1].position.z) < buildingwidthpx*2) {
+				hx = rndpos();
+				hz = rndpos();
 			}
 			coords.push([hx, hz]);
-			//data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_distance = Math.round(getEdgeDistance(objects[0], objects[1]));
 		}
-		return this.generateMap(coords);
+		this.generateMap(coords);
+		return coords;
 	};
 
 	this.groupedMap = function(n, groups) {
-		var MAXGROUPSIZE = DEFAULTDIST/3;
-		// random location, 2 or 3 groups
-		var groups = 2 + Math.round(Math.random());
+		var coords = [], colors = [];
+		var mu = new Array(groups), sigma = new Array(groups);
 		for (var i=0; i<groups; i++) {
-			var mu = [rndist(), rndist()];
-			var sigma = [rndist(MAXGROUPSIZE), rndist(MAXGROUPSIZE)];
-			clusterparams[i] = [mu, sigma];
+			mu[i] = [rndpos(), rndpos()];
+			sigma[i] = [rndpos(MAXGROUPSIZE, 0), rndpos(MAXGROUPSIZE, 0)];
 		}
 
 		for (var i=0; i<9; i++) {
@@ -39,13 +45,20 @@ Map = function() {
 			coords.push([hx, hy]);
 			colors.push(c);
 		}
-		return this.generateMap(coords, colors);
+		this.generateMap(coords, colors);
+		
+		//
+		for (var i=0; i<groups; i++) {
+			this.addClusterToMinimap([mu[i][0], mu[i][1], sigma[i][0], sigma[i][1]]);
+		}
+		//
+		
+		return coords;
 	};
 	
 	this.equidistantMap = function() {
-		var coords = [];
-		var colors = [];
-		var d = 150 + Math.random()*400;
+		var coords = [], colors = [];
+		var d = MINDIST + Math.random()*DEFAULTDIST;
 		
 		for (var i=0; i<9; i++) {
 			var hx = Math.floor(i/3) * d;
@@ -55,7 +68,8 @@ Map = function() {
 			coords.push([hx, hy]);
 			colors.push(c);
 		}
-		return this.generateMap(coords, colors);
+		this.generateMap(coords, colors);
+		return coords;
 	};
 
 	this.generateMap = function(coords, colors) {
@@ -66,8 +80,34 @@ Map = function() {
 				setHouseColor(house, colors[i]);
 			}
 		}
-		//data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_coords = coords;
+		this.generateMinimap(coords, colors);
+		////data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_coords = coords;
 		return coords;
+	};
+	
+	this.generateMinimap = function(coords, colors) {
+		var html = "";
+		for (var i = 0; i < objects.length; i++) {
+			var c = minimapCoords([objects[i].position.x, objects[i].position.z]);
+			html += "<div class='dot' style='left:"+c[0]+"px;top:"+c[1]+"px;height:"+c[2]+"px;width:"+c[3]+"px;background:#"+colors[i].toString(16)+"'></div>";
+		}
+		var c = minimapCoords([controls.getObject().position.x, controls.getObject().position.z]);
+		html += "<div id='me' class='dot' style='left:"+c[0]+"px;top:"+c[1]+"px;border:1px solid red;'></div>";
+		$("#minimap").html(html);
+	};
+	this.addClusterToMinimap = function(c) {
+		for (var i=0; i<c.length; i++) c[i]/=DISTSCALE;
+		c[0]-=c[2]/2;
+		c[1]-=c[3]/2;
+		c = minimapCoords(c);
+		$("#minimap").html($("#minimap").html()+"<div class='dot gauss' style='left:"+c[0]+"px;top:"+c[1]+"px;height:"+c[2]+"px;width:"+c[3]+"px;background-color: rgba(0, 255, 255, 0.15);-webkit-border-radius: 1000px; -moz-border-radius: 1000px; border-radius: 1000px;'></div>");
+	};
+	
+	this.update = function() {
+		if ($("#me")) {
+			var c = minimapCoords([controls.getObject().position.x, controls.getObject().position.z]);
+			$("#me").css({left: c[0], top: c[1]});
+		}
 	};
 	
 	this.clearMap = function() {
@@ -82,15 +122,24 @@ Map = function() {
 
 /////////////////////////
 
+function minimapCoords(c) {
+	if (c.length < 4) {
+		c[2] = c[3] = buildingwidthpx;
+	}
+	return [Math.round(c[0]*MINIMAPSIZE/FOGRANGE+5), Math.round(c[1]*MINIMAPSIZE/FOGRANGE+5), Math.round(c[2]*MINIMAPSIZE/FOGRANGE), Math.round(c[3]*MINIMAPSIZE/FOGRANGE)];
+}
+
 function addHouse(houselabel, hx, hz, color) { //hx and hz in m
 	house = houses[houselabel].clone();
 	house.position.set(hx / DISTSCALE, 0, hz / DISTSCALE); // convert between m and units
 	house.scale.set(HOUSESCALE, HOUSESCALE, HOUSESCALE);
 	bbox = getBoundingBox(house);
 	
-	var text1 = get3DText(houselabel, (bbox.max.z-bbox.min.z)/2);
+	//var lbl = houselabel;
+	var lbl = "obj"+objects.length;
+	var text1 = get3DText(lbl, (bbox.max.z-bbox.min.z)/2);
 	house.add(text1);
-	var text2 = get3DText(houselabel, bbox.min.z-0.01, Math.PI);
+	var text2 = get3DText(lbl, bbox.min.z-0.01, Math.PI);
 	house.add(text2);
 	
 	if (color) {

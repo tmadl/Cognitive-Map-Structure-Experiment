@@ -83,3 +83,20 @@ body {
 
 .float {float: left;}
 .clear {clear: both; display: block;}
+
+
+#minimap {
+	position:absolute;
+	left:1px;
+	top:1px;
+	height:110px;
+	width:110px;
+	background:#000000;
+	border:1px solid black;
+}
+
+.dot {
+	position:absolute;
+	height:2px;
+	width:2px;
+}
