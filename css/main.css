@@ -63,7 +63,7 @@ body {
 
 #controls {
 	position: absolute;
-	bottom: 30px;
+	bottom: 10px;
 }
 
 #feedback_box {
@@ -135,6 +135,7 @@ body {
 	font-size: 13px;
 	background-color: rgba(0, 0, 0, 0.3);
 	padding: 4px;
+	z-index: 99999;
 }
 
 #distest input {
@@ -160,4 +161,8 @@ body {
 	color: #FFFFFF;
 	font-weight:bold;
 	text-align: center;
+}
+
+.itxt{
+	font-size: 12px;
 }

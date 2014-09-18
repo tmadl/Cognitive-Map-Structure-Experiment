@@ -1,7 +1,7 @@
 var DEFAULTDIST = 250;
 var MAXGROUPSIZE = 400, MINGROUPSIZE = 200, MINGROUPDIST = 300;
 
-var function_names = ["Customer", "Restaurant", "Gas Station", "Tuning Shop"];
+var function_names = ["Customer", "Supplier", "Gas Station"];
 
 Map = function() {
 	this.building_coords=[];
@@ -49,6 +49,12 @@ Map = function() {
 		this.group_colors = [];
 		for (var i = 0; i < groups; i++) this.group_colors.push(0xffffff);
 		
+		var fid = shuffle(function_names.length);
+		var fnames = []; 
+		for (var i = 0; i < groups; i++) {
+			fnames.push(function_names[fid[i]]);
+		}
+		
 		var mu = new Array(groups), sigma = new Array(groups);
 		for (var i=0; i<groups; i++) {
 			var pos = rndNotTooClose(mu, randomDist, randomDist, MINGROUPDIST);
@@ -56,11 +62,7 @@ Map = function() {
 			sigma[i] = [randomDist(MAXGROUPSIZE, MINGROUPSIZE), randomDist(MAXGROUPSIZE, MINGROUPSIZE)];
 		}
 
-		var permuted_id = [];
-		for (var i=0; i<BUILDINGS; i++) {
-			permuted_id.push(i);
-		}
-		permuted_id = shuffle(permuted_id);
+		function_numbers = [0,0,0];
 		
 		var colors = [], functions = [];
 		for (var i=0; i<BUILDINGS; i++) {
@@ -71,8 +73,10 @@ Map = function() {
 			this.building_coords.push([pos[0], pos[1]]);
 			this.cluster_ids.push(group);
 			
-			if (by_function)
-				functions.push(function_names[permuted_id[i]%function_names.length]);
+			if (by_function) {
+				function_numbers[clid]++;
+				functions.push(fnames[clid]+" "+function_numbers[clid]);
+			}
 			else
 				colors.push(c);
 		}
@@ -88,49 +92,69 @@ Map = function() {
 		return [this.building_coords, this.cluster_ids];
 	};
 	
-	var eqclusters = [[1,1,0,0,0,0], [0,0,0,1,1,0], [0,0,0,0,1,1], [1,0,0,1,0,0]];
-	this.equidistantMap = function(groups) {
-		var BUILDINGS = 5, gridsize = 3;
+	var eqclusters2 = [[1,1,0,0,0,0], [0,0,0,1,1,0], [0,0,0,0,1,1], [1,0,0,1,0,0], [0,1,0,0,0,1]];
+	var eqclusters3 = [[1,1,0,0,0,2], [0,0,0,1,1,2], [0,0,0,2,1,1], [1,0,0,1,0,1], [0,1,0,2,0,1]];
+	var eqclusters;
+	this.equidistantMap = function(groups, by_function) {
+		var gridsize = 3;
+		eqclusters = groups == 2 ? eqclusters2 : eqclusters3; 
+		
+		var BUILDINGS = 4 + Math.round(Math.random()); // buildings: 4 || 5
+		var rect = Math.round(Math.random()); // rectangular or triangular
 		
 		this.clusters = groups;
 		this.building_coords = [];
 		this.cluster_ids = [];
-		this.group_colors = groups ? rndColors(groups) : [0xffffff];
+		this.group_colors = by_function ? [] : rndColors(groups);
+		if (by_function)
+			for (var i = 0; i < groups; i++) this.group_colors.push(0xffffff);
+		
+		var fid = shuffle(function_names.length);
+		var fnames = []; 
+		for (var i = 0; i < groups; i++) {
+			fnames.push(function_names[fid[i]]);
+		}
 		
 		var d = MINDIST*2 + Math.random()*DEFAULTDIST;
 		
-		var rndi = Math.round(Math.random()*eqclusters.length);
+		var rndi = Math.floor(Math.random()*eqclusters.length);
 		var clid_vec = groups ? eqclusters[rndi] : [0,0,0,0,0,0];
 		var oc = clid_vec;
-		var colors = [];
+		var colors = [], functions = [];
 		
-		for (var i=3; i<9; i++) {
+		//alert(groups+"\n"+rndi);
+
+		function_numbers = [0,0,0];
+		
+		var j = 0;
+		for (var i=3; i<BUILDINGS+4; i++) {
 			if (i==5) continue;
 			
 			var xi = Math.floor(i/gridsize), yi = (i%gridsize);
-			//var hx = xi * d, hy = yi * d; // rectangular
-			var hx = xi * d + (yi%2)*d/2, hy = yi * d * Math.sqrt(3)/2; // triangular grid
-			var clid;
-			try {
-				var clid = clid_vec[i-3];
-			} 
-			catch (exc) {
-				clid = groups?eqclusters[rndi][i-3]:0;
-			}
+			if (rect)
+				var hx = xi * d, hy = yi * d; // rectangular
+			else
+				var hx = xi * d + (yi%2)*d/2, hy = yi * d * Math.sqrt(3)/2; // triangular grid
+			var clid = clid_vec[i-3];
 			var c = this.group_colors[clid];
 
 			this.building_coords.push([hx, hy]);
-			colors.push(c);
 			this.cluster_ids.push(clid);
+			if (by_function) {
+				function_numbers[clid]++;
+				functions.push(fnames[clid]+" "+function_numbers[clid]);
+			}
+			else
+				colors.push(c);
 		}
-		this.renderMap(this.building_coords, colors);
+		this.renderMap(this.building_coords, colors, functions);
 		
 		return [this.building_coords, this.cluster_ids];
 	};
 
 	this.renderMap = function(coords, colors, functions) {
 		for (var i = 0; i < coords.length; i++) {
-			var f = functions ? functions[i] : ("Building "+(i+1));
+			var f = functions&&functions.length>0 ? functions[i] : ("Building "+(i+1));
 			this.labels.push(f);
 			if (colors) {
 				addHouse(f, coords[i][0], coords[i][1], colors[i]);
@@ -349,6 +373,9 @@ var rndColors = function(n) {
 };
 
 function intToCol(i) {
+	if (!i) {
+		alert("no color");
+	}
 	var col = i.toString(16);
 	while (col.length < 6) col += "0";
 	return "#"+col;

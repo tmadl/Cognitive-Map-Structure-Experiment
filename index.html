@@ -18,11 +18,13 @@
 			<div id="instructions_center">
 				<div id="loader" style="font-size:40px">Loading (<span id="progress">0</span>%)...</div>
 				<div id="starter" style="display:none;">
-					<span style="font-size:40px">Click to start</span>
+					<span style="font-size:40px">Click <u>here</u> to continue</span>
 					<br />
 					(W, A, S, D = Move, MOUSE = Look around)
 					<br /><br/>
 					Hit Esc to pause
+					<br/><br/>
+					<input type="button" value="Reset current task" onClick="experiment.resetTask()"/>
 					<br/><br/>
 					<b>Best viewed (fastest) in Google Chrome</b>
 				</div>
@@ -42,24 +44,32 @@
 			<h3 align="center">Experiment <span id="expno">1</span> / <span id="max_expno">1</span></h2>
 			<h4 align="center">Task <span id="taskno">1</span> / <span id="max_taskno">1</span></h2>
 			<p align="center" id="distest">
-				Estimate the <span id="wora"></span> distance between<br/>
+				Estimate the <span id="wora" style="display:none"></span> distance between<br/>
 				<span id="from">Building 1</span> and <span id="to">Building 2</span>:<br/>
 				<input id="distance" size="12"/> meters.
 				<span id="distlabel"></span>
 			</p>
 			<p align="justify">
 				<b><u>Instructions:</u></b>
-				<div id="instructions_exp0" class="hidden"></div>
+				<div id="instructions_exp0" class="hidden itxt"></div>
 				<div id="instructions_exp1" class="hidden">
 					Please find the two buildings in the environment (look around with your mouse), 
 					and then  <b>estimate the distance between them</b>.<br/><br/>
 					Please enter your estimated distance and press then press "Enter".
 				</div>
-				<div id="instructions_exp2" class="hidden">exp2
+				<div id="instructions_exp2" class="hidden itxt">
+					Please deliver at least one package:
+					<ul>
+						<li>Find the <b>"Supplier"</b> building and press E to pick up a package</li>
+						<li>Find the <b>"Customer"</b> building and press E to deliver a package</li>
+						<li>Find the <b>"Gas station"</b> (if there is one) to building to fill up your car</li>
+					</ul>
+					Please also memorize the positions of buildings.<br/>
+					Once you have delivered a package and memorized the positions, press enter. 
 				</div>
-				<div id="instructions_exp3" class="hidden">exp3
+				<div id="instructions_exp3" class="hidden itxt">exp3
 				</div>
-				<div id="instructions_exp4" class="hidden">exp4
+				<div id="instructions_exp4" class="hidden itxt">exp4
 				</div>
 			</p>
 			
@@ -70,10 +80,9 @@
 				<span class="clear">
 					<small><i>
 					Press <b>W, A, S, D</b> to move; <br/>
-					Press <b>E</b> <u>near a building</u> to deliver;<br/>
+					Press <b>E</b> <u>near a building</u> to use;<br/>
 					Number keys (0-9) to enter distance.<br/>
 					All buildings are <b>50m</b> high<br/>
-					(Press <b>Esc</b> to pause)
 					</i></small>
 				</span>
 			</p>

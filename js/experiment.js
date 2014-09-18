@@ -52,25 +52,26 @@ Experiment = function() {
 	
 	this.exp2task = function() {
 		var CONDITIONS = 4;
-		DISTJUDGMENTS = 6;
+		var DISTGROUPCOND = 2, EQUIDISTCOND = 1, FUNCGROUPCOND=4, COLGROUPCOND=3;
+		
+		DISTJUDGMENTS = 4;
 		
 		var ct = permuted_taskno[exp_properties.taskno-1]; //current task number, randomly permuted
-		var condition = ct % CONDITIONS + 1; //cycle through conditions
+		//var condition = ct % CONDITIONS + 1; //cycle through conditions
+		condition = 3;
 		
 		// generate and store maps of experiment 2
-		var groups = 2; // + Math.round(Math.random()); // 2 or 3 groups
-		if (false && condition==2) {
+		var groups = 2 + Math.round(Math.random()); // 2 or 3 groups
+		if (false && condition == DISTGROUPCOND) {
 			map.groupedMap(groups);
 		}
-		else if (false && condition == 1) { // equidistant, no cluters
+		else if (false && condition == EQUIDISTCOND) { // equidistant, no clusters
 			map.equidistantMap();
 		}
 		else { // equidistant 
 			//cluster by color [c3] or function [c4] 
-			map.equidistantMap(groups);
+			map.equidistantMap(groups, condition==FUNCGROUPCOND);
 		}
-		
-		showMapOverlay();
 	};
 	this.exp2judged = function() {
 		// distance judged - ask for next judgment
@@ -83,6 +84,7 @@ Experiment = function() {
 				askForDistEst();
 			}
 			else {
+				//showMapOverlay();
 				nextTask();
 			}
 		}
@@ -105,8 +107,11 @@ Experiment = function() {
 			$("#wora").text(distEstTypes[cdistEst]);
 			var j = 0, maxtries = 1000;
 			do {
-				var cluster = Math.floor(Math.random()*map.clusters);
-				var ids = map.getIdsByCluster(cluster);
+				var cluster, ids;
+				do {
+					cluster = Math.floor(Math.random()*map.clusters);
+					ids = map.getIdsByCluster(cluster);
+				} while(ids.length < 2);
 				if (distEstTypes[cdistEst] == 0) { // draw 2 within cluster
 					var rndids = drawRandom(ids, 2);
 					fromid = rndids[0];
@@ -128,8 +133,16 @@ Experiment = function() {
 		
 		$("#distance").val("");
 		$("#from").text(map.labels[fromid]);
+		//$("#from").css({color: intToCol(map.group_colors[map.cluster_ids[fromid]])});
 		$("#to").text(map.labels[toid]);
+		//$("#to").css({color: intToCol(map.group_colors[map.cluster_ids[toid]])});
 		$("#distest").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
+	};
+	
+	this.resetTask = function() {
+		exp_properties.taskno--;
+		pointerlockchange();
+		nextTask();
 	};
 	
 	var nextTask = function() {
@@ -149,8 +162,8 @@ Experiment = function() {
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].cluster_ids = map.cluster_ids;
 			
 			// reset camera to somewhere near the existing buildings (but not within them)
-			var i = Math.round(Math.random()*objects.length);
-			while (!objects[i]) i = Math.round(Math.random()*objects.length);
+			var i = Math.floor(Math.random()*objects.length);
+			while (!objects[i]) i = Math.floor(Math.random()*objects.length);
 			controls.getObject().position.x = objects[i].position.x + buildingwidthpx*1.5;
 			controls.getObject().position.z = objects[i].position.z + buildingwidthpx*1.5;
 			controls.getObject().rotation.y = 0.8;
@@ -344,7 +357,16 @@ function showMapOverlay() {
 ////
 
 function shuffle(arr) {
-	return arr.sort(function(a,b) {return Math.random()*2-1;});
+	if (typeof arr == "number") {
+		var a = [];
+		for (var i=0; i<arr; i++) {
+			a.push(i);
+		}		
+		return shuffle(a);
+	}
+	else {
+		return arr.sort(function(a,b) {return Math.random()*2-1;});
+	}
 }
 
 function drawRandom(list, n) {
