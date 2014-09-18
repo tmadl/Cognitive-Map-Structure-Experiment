@@ -8,6 +8,7 @@ Map = function() {
 	this.cluster_ids=[];
 	this.clusters = 0;
 	this.labels=[];
+	this.group_colors = [0xffffff];
 	
 	this.getIdsByCluster = function(cluster) {
 		var ids = [];
@@ -45,6 +46,9 @@ Map = function() {
 		this.clusters = groups;
 		this.building_coords = [];
 		this.cluster_ids = [];
+		this.group_colors = [];
+		for (var i = 0; i < groups; i++) this.group_colors.push(0xffffff);
+		
 		var mu = new Array(groups), sigma = new Array(groups);
 		for (var i=0; i<groups; i++) {
 			var pos = rndNotTooClose(mu, randomDist, randomDist, MINGROUPDIST);
@@ -56,12 +60,12 @@ Map = function() {
 		for (var i=0; i<BUILDINGS; i++) {
 			permuted_id.push(i);
 		}
-		permuted_id = permuted_id.sort(function(a,b) {return Math.random()*2-1;});
+		permuted_id = shuffle(permuted_id);
 		
 		var colors = [], functions = [];
 		for (var i=0; i<BUILDINGS; i++) {
 			var group = permuted_id[i]%groups; 
-			var c = 0xffffff;
+			var c = group_colors[clid];
 			
 			var pos = rndNotTooClose(this.building_coords, function() {return normal_random(mu[group][0], sigma[group][0]);}, function() {return normal_random(mu[group][1], sigma[group][1]);});
 			this.building_coords.push([pos[0], pos[1]]);
@@ -84,27 +88,36 @@ Map = function() {
 		return [this.building_coords, this.cluster_ids];
 	};
 	
+	var eqclusters = [[1,1,0,0,0,0], [0,0,0,1,1,0], [0,0,0,0,1,1], [1,0,0,1,0,0]];
 	this.equidistantMap = function(groups) {
-		var BUILDINGS = 7, gridsize = 3;
+		var BUILDINGS = 5, gridsize = 3;
 		
 		this.clusters = groups;
 		this.building_coords = [];
 		this.cluster_ids = [];
+		this.group_colors = groups ? rndColors(groups) : [0xffffff];
 		
 		var d = MINDIST*2 + Math.random()*DEFAULTDIST;
 		
-		var clid_matrix = rndGridClusters(gridsize, groups);
-		var color_array = groups ? rndColors(groups) : [0xffffff];
+		var rndi = Math.round(Math.random()*eqclusters.length);
+		var clid_vec = groups ? eqclusters[rndi] : [0,0,0,0,0,0];
+		var oc = clid_vec;
 		var colors = [];
 		
-		for (var i=0; i<9; i++) {
-			if (i==0 || i==2) continue;
+		for (var i=3; i<9; i++) {
+			if (i==5) continue;
 			
 			var xi = Math.floor(i/gridsize), yi = (i%gridsize);
 			//var hx = xi * d, hy = yi * d; // rectangular
 			var hx = xi * d + (yi%2)*d/2, hy = yi * d * Math.sqrt(3)/2; // triangular grid
-			var clid = clid_matrix[xi][yi]; 
-			var c = color_array[clid];
+			var clid;
+			try {
+				var clid = clid_vec[i-3];
+			} 
+			catch (exc) {
+				clid = groups?eqclusters[rndi][i-3]:0;
+			}
+			var c = this.group_colors[clid];
 
 			this.building_coords.push([hx, hy]);
 			colors.push(c);
@@ -134,10 +147,9 @@ Map = function() {
 		var html = "";
 		for (var i = 0; i < objects.length; i++) {
 			var c = minimapCoords([objects[i].position.x, objects[i].position.z]);
-			var col = colors && colors[i] ? colors[i].toString(16) : "ffffff";
-			while (col.length < 6) col += "0";
-			html += "<div class='dot' style='left:"+c[0]+"px;top:"+c[1]+"px;height:"+c[2]+"px;width:"+c[3]+"px;background:#"+col+"' title='"+this.labels[i]+"'></div>";
-			html += "<div class='dotlabel' style='left:"+(c[0]+3)+"px;top:"+c[1]+"px;color:#"+col+"' title='"+this.labels[i]+"'>"+(i+1)+"</div>";
+			var col = colors && colors[i] ? intToCol(colors[i]) : "#ffffff";
+			html += "<div class='dot' style='left:"+c[0]+"px;top:"+c[1]+"px;height:"+c[2]+"px;width:"+c[3]+"px;background:"+col+"' title='"+this.labels[i]+"'></div>";
+			html += "<div class='dotlabel' style='left:"+(c[0]+3)+"px;top:"+c[1]+"px;color:"+col+"' title='"+this.labels[i]+"'>"+(i+1)+"</div>";
 		}
 		var c = minimapCoords([controls.getObject().position.x, controls.getObject().position.z]);
 		html += "<div id='me' class='dot' style='left:"+c[0]+"px;top:"+c[1]+"px;border:1px solid red;'></div>";
@@ -270,7 +282,7 @@ var rndNotTooClose = function(coords, rndFunctionX, rndFunctionY, mind) {
 	}
 	return [x, y];
 };
-
+/*
 var rndGridClusters = function(gridsize, no_clusters) {
 	var cmap = [];
 	for (var i=0; i<gridsize; i++) {
@@ -294,7 +306,7 @@ var rndGridClusters = function(gridsize, no_clusters) {
 		}
 	}
 	return cmap;
-};
+};*/
 
 //var coldist = function(col1, col2) {
 var moddist = function(c1, c2) {
@@ -335,6 +347,13 @@ var rndColors = function(n) {
 	}
 	return colors; 
 };
+
+function intToCol(i) {
+	var col = i.toString(16);
+	while (col.length < 6) col += "0";
+	return "#"+col;
+}
+
 
 
 // random

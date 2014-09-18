@@ -58,7 +58,7 @@ Experiment = function() {
 		var condition = ct % CONDITIONS + 1; //cycle through conditions
 		
 		// generate and store maps of experiment 2
-		var groups = 2 + Math.round(Math.random()); // 2 or 3 groups
+		var groups = 2; // + Math.round(Math.random()); // 2 or 3 groups
 		if (false && condition==2) {
 			map.groupedMap(groups);
 		}
@@ -69,6 +69,8 @@ Experiment = function() {
 			//cluster by color [c3] or function [c4] 
 			map.equidistantMap(groups);
 		}
+		
+		showMapOverlay();
 	};
 	this.exp2judged = function() {
 		// distance judged - ask for next judgment
@@ -165,7 +167,7 @@ Experiment = function() {
 				for (var i=DISTJUDGMENTS/2; i<DISTJUDGMENTS; i++)
 					distEstTypes[i] = 1;
 			}
-			distEstTypes = distEstTypes.sort(function(a,b) {return Math.random()*2-1;});
+			distEstTypes = shuffle(distEstTypes);
 			// ask for first distance judgment
 			askForDistEst();
 		}
@@ -194,7 +196,7 @@ Experiment = function() {
 			var tasks = new Array(taskNumbersPerExperiment[exp_properties.expno]);
 			for (var i=1; i<=taskNumbersPerExperiment[exp_properties.expno]; i++)
 				tasks[i-1]=i;
-			this.permuted_taskno = tasks.sort(function(a,b) {return Math.random()*2-1;});
+			this.permuted_taskno = shuffle(tasks);
 			
 			nextTask();
 		}
@@ -213,19 +215,56 @@ Experiment = function() {
 	this.onEnter = function() {
 		//participant pressed enter; record distance estimate
 		
-		est = parseInt($("#distance").val());
-		if (isNaN(est)) {
-			alert("Please enter an estimated distance!\n(Make sure it is a valid number)");
+		if (mapcanvasshown) {
+			//record drawn map
+			if (!mapcanvasclicked) {
+				alert("You made no changes to the map. Please create a map of where you remember the buildings by dragging them into their correct place with your mouse.");
+			}
+			else {
+				rememberedbuildingx = [];
+				rememberedbuildingy = [];
+				for (var i = 0; i < objects.length; i++) {
+					var x = $("#bid"+i).attr("x");
+					var y = $("#bid"+i).attr("y");
+					if (isNaN(x) || isNaN(y)) {
+						x = $("#bid"+i).offset().left - $("#bid"+i).parent().offset().left;
+						y = $("#bid"+i).offset().top - $("#bid"+i).parent().offset().top;
+						x += imgsize/2;
+						y += imgsize/2;
+					}
+					//convert?
+					// store and log
+					rememberedbuildingx.push(x);
+					rememberedbuildingy.push(y);
+				}
+		
+				data["exp"+exp_properties.expno]["task"+exp_properties.taskno].rememberedX = rememberedbuildingx;
+				data["exp"+exp_properties.expno]["task"+exp_properties.taskno].rememberedY = rememberedbuildingy;
+				
+				mapcanvasshown = false;
+				$("#instructions_center").show();
+				$("#mapcanvas").hide();
+				$("#blocker").hide();
+				
+				nextTask();
+			}
 		}
 		else {
-			// get real distance
-			var reald = map.getDistance(distanceEstimation.from, distanceEstimation.to);
-			// store estimated and real distance
-			distanceEstimation[0] = est;
-			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].distance_estimations.push(distanceEstimation);
-			showDistance(est, reald);
-			
-			experiment["exp"+exp_properties.expno+"judged"]();
+			//record distance estimate
+			est = parseInt($("#distance").val());
+			if (isNaN(est)) {
+				alert("Please enter an estimated distance!\n(Make sure it is a valid number)");
+			}
+			else {
+				// get real distance
+				var reald = map.getDistance(distanceEstimation.from, distanceEstimation.to);
+				// store estimated and real distance
+				distanceEstimation[0] = est;
+				data["exp"+exp_properties.expno]["task"+exp_properties.taskno].distance_estimations.push(distanceEstimation);
+				showDistance(est, reald);
+				
+				experiment["exp"+exp_properties.expno+"judged"]();
+			}
 		}
 	};
 	var showDistance = function(est, reald) {
@@ -241,8 +280,72 @@ Experiment = function() {
 	};
 };
 
+////
+
+var mapcanvasclicked = false, mapcanvasshown = false;
+var imgsize = 30;
+function showMapOverlay() {
+	var N = objects.length;
+	
+	$("#blocker").show();
+	$("#instructions_center").hide();
+	$("#mapcanvas").show();
+	
+	mapcanvasclicked = false;
+	mapcanvasshown = true;
+	
+	$("#mapcanvas").mousedown(function() {
+		mapcanvasclicked = true;
+	});
+	
+	var images = [];
+	
+	$("#mapcanvas").html("");
+	for (var i=0; i < N; i++) {
+		images.push(
+			$("<img class='buildingimg' />").attr({
+				src: "img/buildingsmall.png",
+				id: "imgbid"+i,
+				height: imgsize,
+				width: imgsize,
+			}).add($("<div id='blbl_bid"+i+"' class='buildinglbl'>"+experiment.getMap().labels[i]+"</div>"))
+			.add($("<div class='buildingcolor' id='bid"+i+"' style='background:"+intToCol(experiment.getMap().group_colors[experiment.getMap().cluster_ids[i]])+"'></div>").attr({
+				onload: function() {
+					$(this).draggable({ containment: "#mapcanvas" });
+					$(this).mouseup(function() {
+						var x = $(this).offset().left - $(this).parent().parent().offset().left;
+						var y = $(this).offset().top - $(this).parent().parent().offset().top;
+						x += imgsize/2;
+						y += imgsize/2;
+						$(this).attr("x", x);
+						$(this).attr("y", y);
+						$("#blbl_b"+$(this).attr("id")).css({left: $(this).offset().left, top: $(this).offset().top, position:'absolute'});
+						$("#img"+$(this).attr("id")).css({left: $(this).offset().left, top: $(this).offset().top, position:'absolute'});
+					});
+					$(this).mousemove(function() {
+						$("#blbl_"+$(this).attr("id")).css({left: $(this).offset().left, top: $(this).offset().top, position:'absolute'});
+						$("#img"+$(this).attr("id")).css({left: $(this).offset().left, top: $(this).offset().top, position:'absolute'});
+					});
+					
+				}
+			})).add("<br/><br/><br/>")
+		);
+	}
+	images = shuffle(images);
+	for (var i = 0; i < N; i++) {
+		$("#mapcanvas").append(images[i]);
+	}
+	for (var i = 0; i < N; i++) {
+		$("#blbl_bid"+i).css({left: $("#bid"+i).offset().left, top: $("#bid"+i).offset().top, position:'absolute'});
+		$("#imgbid"+i).css({left: $("#bid"+i).offset().left, top: $("#bid"+i).offset().top, position:'absolute'});
+	}
+}
 
 ////
+
+function shuffle(arr) {
+	return arr.sort(function(a,b) {return Math.random()*2-1;});
+}
 
 function drawRandom(list, n) {
 	var result = [];

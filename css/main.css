@@ -1,5 +1,6 @@
 body {
   background-color: #ffffff;
+  color: #ffffff;
   font-family: Arial;
   margin: 0;
   overflow: hidden;
@@ -102,8 +103,31 @@ body {
 }
 
 .dotlabel {
-	position:absolute;
+	position: absolute;
 	font-size: 8px;
+}
+
+.buildingoverlay {
+	position: absolute;
+}
+.buildingcolor {
+	z-index: 9999;
+	opacity: 0.5;
+	width: 30px;
+	height: 30px;
+	position: absolute;
+}
+.buildinglbl {
+	position: absolute;
+	margin-top: 30px;
+	margin-left: -10px;
+	font-size: 11px;
+	font-family: Arial;
+	color: #ffffff;
+}
+
+.buildingimg {
+	position:absolute;
 }
 
 #distest {
@@ -120,4 +144,20 @@ body {
 #from, #to {
 	font-weight: bold;
 	text-decoration: underline;
+}
+
+#mapcanvas {
+	height: 600px;
+	width: 600px;
+	margin-left: auto;
+	margin-right: auto;
+	background: #AAAA99;
+	border: 1px solid black;
+	display: none;
+}
+
+#mapinstructions {
+	color: #FFFFFF;
+	font-weight:bold;
+	text-align: center;
 }

@@ -191,7 +191,7 @@ function getBoundingBox(obj) {
 function get3DText(str, zOffset, rotate) {
 	if (!zOffset) zOffset = 4;
 	if (!rotate) rotate = 0;
-	
+		
 	var text3d = new THREE.TextGeometry( str, {
 		size: 0.7,
 		height: 0,
