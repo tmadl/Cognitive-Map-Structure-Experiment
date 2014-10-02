@@ -49,10 +49,12 @@ Map = function() {
 		this.group_colors = [];
 		for (var i = 0; i < groups; i++) this.group_colors.push(0xffffff);
 		
-		var fid = shuffle(function_names.length);
-		var fnames = []; 
-		for (var i = 0; i < groups; i++) {
-			fnames.push(function_names[fid[i]]);
+		//var fid = shuffle(function_names.length);
+		//dont permute - first two must be customer and supplier (or other way round)
+		var fnames = function_names.slice(); 
+		if (Math.round(Math.random())) {
+			fnames[0] = function_names[1];
+			fnames[1] = function_names[0];
 		}
 		
 		var mu = new Array(groups), sigma = new Array(groups);

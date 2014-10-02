@@ -43,11 +43,17 @@
 		<div id="sidebar">
 			<h3 align="center">Experiment <span id="expno">1</span> / <span id="max_expno">1</span></h2>
 			<h4 align="center">Task <span id="taskno">1</span> / <span id="max_taskno">1</span></h2>
-			<p align="center" id="distest">
-				Estimate the <span id="wora" style="display:none"></span> distance between<br/>
-				<span id="from">Building 1</span> and <span id="to">Building 2</span>:<br/>
-				<input id="distance" size="12"/> meters.
-				<span id="distlabel"></span>
+			<p align="center" id="current_task">
+					<span class="estimate_task">Estimate the distance between<br/></span>				<span class="deliver_task hidden">Pick up package from </span>
+					
+						<span id="from">Building 1</span>
+						
+					<span class="estimate_task">and </span>												<span class="deliver_task hidden">,<br/>deliver it to </span>
+					
+						<span id="to">Building 2</span>
+						
+					<span class="estimate_task">:<br/><input id="distance" size="12"/> meters.</span>	<span class="deliver_task hidden">,<br/>and then press Enter</span>
+				</span>
 			</p>
 			<p align="justify">
 				<b><u>Instructions:</u></b>
@@ -60,12 +66,12 @@
 				<div id="instructions_exp2" class="hidden itxt">
 					Please deliver at least one package:
 					<ul>
-						<li>Find the <b>"Supplier"</b> building and press E to pick up a package</li>
-						<li>Find the <b>"Customer"</b> building and press E to deliver a package</li>
-						<li>Find the <b>"Gas station"</b> (if there is one) to building to fill up your car</li>
+						<li>Find the <b>Supplier</b> building and press E to pick up a package</li>
+						<li>Find the <b>Customer</b> building and press E to deliver a package</li>
+						<li>Find the <b>Gas station</b> (if there is one) to building to fill up your car</li>
 					</ul>
 					Please also memorize the positions of buildings.<br/>
-					Once you have delivered a package and memorized the positions, press enter. 
+					<!--Once you have delivered a package and memorized the positions, press enter.--> 
 				</div>
 				<div id="instructions_exp3" class="hidden itxt">exp3
 				</div>

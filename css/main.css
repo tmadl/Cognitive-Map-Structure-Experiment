@@ -130,15 +130,18 @@ body {
 	position:absolute;
 }
 
-#distest {
-	color: #ddeeff;
-	font-size: 13px;
-	background-color: rgba(0, 0, 0, 0.3);
+#current_task {
 	padding: 4px;
+	background-color: rgba(0, 0, 0, 0.3);
 	z-index: 99999;
 }
 
-#distest input {
+#current_task, #distest, #delivertask {
+	font-size: 13px;
+	color: #ddeeff;
+}
+
+#current_task input {
 	background: #ddeeff;
 }
 

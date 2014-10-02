@@ -58,14 +58,14 @@ Experiment = function() {
 		
 		var ct = permuted_taskno[exp_properties.taskno-1]; //current task number, randomly permuted
 		//var condition = ct % CONDITIONS + 1; //cycle through conditions
-		condition = 3;
+		condition = FUNCGROUPCOND;
 		
 		// generate and store maps of experiment 2
 		var groups = 2 + Math.round(Math.random()); // 2 or 3 groups
-		if (false && condition == DISTGROUPCOND) {
+		if (condition == DISTGROUPCOND) {
 			map.groupedMap(groups);
 		}
-		else if (false && condition == EQUIDISTCOND) { // equidistant, no clusters
+		else if (condition == EQUIDISTCOND) { // equidistant, no clusters
 			map.equidistantMap();
 		}
 		else { // equidistant 
@@ -90,53 +90,30 @@ Experiment = function() {
 		}
 	};	
 	
-	var askForDistEst = function() {
-		var fromid = -1, toid = -1;
-		var from = "Building 1", to = "Building 2";
-		// which distance is to be estimated
-		$("#wora").text("");
-		if (map.clusters == 0) {
-			do {
-				var ids = map.getIdsByCluster(0);
-				var rndids = drawRandom(ids, 2);
-				fromid = rndids[0];
-				toid = rndids[1];
-			} while (containsVector(distEstAsked, [fromid, toid]));
+	var updateTaskInstruction = function() {
+		var fromid, toid;
+		if (this.delivery_game) {
+			$(".deliver_task").show();
+			$(".estimate_task").hide();
+			
+			
 		}
 		else {
-			$("#wora").text(distEstTypes[cdistEst]);
-			var j = 0, maxtries = 1000;
-			do {
-				var cluster, ids;
-				do {
-					cluster = Math.floor(Math.random()*map.clusters);
-					ids = map.getIdsByCluster(cluster);
-				} while(ids.length < 2);
-				if (distEstTypes[cdistEst] == 0) { // draw 2 within cluster
-					var rndids = drawRandom(ids, 2);
-					fromid = rndids[0];
-					toid = rndids[1];
-				}
-				else if (distEstTypes[cdistEst] == 1) { // draw across cluster
-					var cluster2;
-					do {
-						cluster2 = Math.floor(Math.random()*map.clusters);
-					} while (cluster2 == cluster);
-					var ids2 = map.getIdsByCluster(cluster2);
-					fromid = drawRandom(ids, 1)[0];
-					toid = drawRandom(ids2, 1)[0];
-				}
-			} while ((containsVector(distEstAsked, [fromid, toid]) || containsVector(distEstAsked, [toid, fromid])) && j++ < maxtries);
+			$(".deliver_task").show();
+			$(".estimate_task").hide();
+			
+			pair = getBuildingPairForDistanceEstimation();
+			
+			fromid = pair[0];
+			toid = pair[1];
+			distEstAsked.push(pair);
+			distanceEstimation = [-1, fromid, toid, distEstTypes[cdistEst]]; //distance, from, to, type	
 		}
-		distEstAsked.push([fromid, toid]);
-		distanceEstimation = [-1, fromid, toid, distEstTypes[cdistEst]]; //distance, from, to, type
 		
 		$("#distance").val("");
 		$("#from").text(map.labels[fromid]);
-		//$("#from").css({color: intToCol(map.group_colors[map.cluster_ids[fromid]])});
 		$("#to").text(map.labels[toid]);
-		//$("#to").css({color: intToCol(map.group_colors[map.cluster_ids[toid]])});
-		$("#distest").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
+		$("#current_task").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
 	};
 	
 	this.resetTask = function() {
@@ -181,8 +158,17 @@ Experiment = function() {
 					distEstTypes[i] = 1;
 			}
 			distEstTypes = shuffle(distEstTypes);
-			// ask for first distance judgment
-			askForDistEst();
+			
+			// delivery game and first distance judgment
+			if (exp_properties.expno == 0) {
+				this.delivery_game = false;
+			}
+			else {
+				this.delivery_game = true;
+				this.delivered = 0;
+			}
+				
+			updateTaskInstruction();
 		}
 		else {
 			nextExperiment();
@@ -214,6 +200,49 @@ Experiment = function() {
 			nextTask();
 		}
 	};
+	
+	var getBuildingPairForDistanceEstimation = function() {
+		var fromid = -1, toid = -1;
+		
+		// which distance is to be estimated - random, but make sure that its not asked twice
+		
+		if (map.clusters == 0) {
+			do {
+				var ids = map.getIdsByCluster(0);
+				var rndids = drawRandom(ids, 2);
+				fromid = rndids[0];
+				toid = rndids[1];
+			} while (containsVector(distEstAsked, [fromid, toid]));
+		}
+		else {
+			var j = 0, maxtries = 1000;
+			do {
+				var cluster, ids;
+				do {
+					cluster = Math.floor(Math.random()*map.clusters);
+					ids = map.getIdsByCluster(cluster);
+				} while(ids.length < 2);
+				if (distEstTypes[cdistEst] == 0) { // draw 2 within cluster
+					var rndids = drawRandom(ids, 2);
+					fromid = rndids[0];
+					toid = rndids[1];
+				}
+				else if (distEstTypes[cdistEst] == 1) { // draw across cluster
+					var cluster2;
+					do {
+						cluster2 = Math.floor(Math.random()*map.clusters);
+					} while (cluster2 == cluster);
+					var ids2 = map.getIdsByCluster(cluster2);
+					fromid = drawRandom(ids, 1)[0];
+					toid = drawRandom(ids2, 1)[0];
+				}
+			} while ((containsVector(distEstAsked, [fromid, toid]) || containsVector(distEstAsked, [toid, fromid])) && j++ < maxtries);
+		}
+				
+		return [fromid, toid];
+	};
+	
+	
 	this.run = function() {
 		nextExperiment();
 	};
