@@ -339,6 +339,9 @@ $(document).on("keydown", function (e) {
 	else if (e.which == 13) {
 		experiment.onEnter();
 	}
+	else if (e.which == 69) {
+		experiment.onUse();
+	}
 });
 
 

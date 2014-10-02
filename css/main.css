@@ -24,7 +24,7 @@ body {
 
 }
 
-#instructions_center {
+#instructions_center, #congrats {
 
 	width: 100%;
 	height: 100%;
@@ -59,6 +59,65 @@ body {
 	padding: 10px;
 	color: #ffffff;
 	background-color: rgba(0, 0, 0, 0.4);
+}
+
+#statusbar {
+	width: 600px;
+	background-color: rgba(0, 0, 0, 0.4);
+	position:absolute;
+	top: 0px;
+	left: 0px;
+	right: 0px;
+	margin: 0 auto;
+	height: 50px;
+	padding: 5px;
+}
+
+#package {
+	height: 50px;
+	width: 50px;
+	float: left;
+}
+.tank {
+	width: 410px;
+	height: 50px;
+	float: left;
+	padding-top: 15px !important;
+	padding-left: 28px !important;
+	font-size: 16px;
+}
+.progressbar {
+	width: 310px;
+	height: 17px;
+	background: #000000;
+	float: left;
+}
+.progress {
+	width: 80%;
+	height: 17px;
+	background: #0ff000;
+}
+#cashamount {
+	color: #00ff00;
+	font-size: 20px;
+	font-weight: bold;
+}
+.cash {
+	width: 110px;
+	height: 50px;
+	float:left;
+	padding-top: 10px !important;
+	text-align: center;
+}
+.nopad, #package, #tank, #money, .progressbar, .progress {
+	margin: 0;
+	padding: 0;
+}
+.package_empty {
+	background: url(../img/package_empty.png);
+}
+.package {
+	background: url(../img/package.png);
 }
 
 #controls {
@@ -164,6 +223,7 @@ body {
 	color: #FFFFFF;
 	font-weight:bold;
 	text-align: center;
+	display: none;
 }
 
 .itxt{

@@ -14,7 +14,16 @@ Map = function() {
 		var ids = [];
 		for (var i = 0; i < this.cluster_ids.length; i++) {
 			if (this.cluster_ids[i] == cluster)
-				ids.push(i);
+				ids.push(this.cluster_ids[i]);
+		}
+		return ids;
+	};
+	
+	this.getIdsByFunctionName = function(functionname) {
+		var ids = [];
+		for (var i = 0; i < this.cluster_ids.length; i++) {
+			if (this.labels[i].toLowerCase().indexOf(functionname.toLowerCase()) > -1)
+				ids.push(this.cluster_ids[i]);
 		}
 		return ids;
 	};
@@ -206,6 +215,7 @@ Map = function() {
 		
 		this.building_coords=[];
 		this.cluster_ids=[];
+		this.labels=[];
 	};
 };
 
@@ -254,6 +264,17 @@ function getEdgeDistance(o1, o2) { // in m
 	var x1 = o1.position.x, x2 = o2.position.x, z1 = o1.position.z, z2 = o2.position.z;
 	var l = buildingwidthpx / 2;
 	var v1 = [new THREE.Vector2(x1 + l, z1 + l), new THREE.Vector2(x1 + l, z1 - l), new THREE.Vector2(x1 - l, z1 + l), new THREE.Vector2(x1 - l, z1 - l)];
+	var v2 = [new THREE.Vector2(x2 + l, z2 + l), new THREE.Vector2(x2 + l, z2 - l), new THREE.Vector2(x2 - l, z2 + l), new THREE.Vector2(x2 - l, z2 - l)];
+	
+	var d = leastDistance(v1, v2)*DISTSCALE;
+	return d;
+	//return (Math.sqrt(Math.pow(dx, 2) + Math.pow(dz, 2))*DISTSCALE - buildingwidth*DISTSCALE);
+}
+
+function getPointToEdgeDistance(o1, o2) { // in m
+	var x1 = o1.position.x, x2 = o2.position.x, z1 = o1.position.z, z2 = o2.position.z;
+	var l = buildingwidthpx / 2;
+	var v1 = [new THREE.Vector2(x1, z1)];
 	var v2 = [new THREE.Vector2(x2 + l, z2 + l), new THREE.Vector2(x2 + l, z2 - l), new THREE.Vector2(x2 - l, z2 + l), new THREE.Vector2(x2 - l, z2 - l)];
 	
 	var d = leastDistance(v1, v2)*DISTSCALE;
@@ -374,12 +395,10 @@ var rndColors = function(n) {
 	return colors; 
 };
 
-function intToCol(i) {
-	if (!i) {
-		alert("no color");
-	}
+function intToCol(i, len) {
+	if (!len) len = 6;
 	var col = i.toString(16);
-	while (col.length < 6) col += "0";
+	while (col.length < len) col += "0";
 	return "#"+col;
 }
 

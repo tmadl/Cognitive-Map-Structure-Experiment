@@ -16,6 +16,8 @@ function init() {
 Experiment = function() {
 	var map = new Map();
 	var coords; // current building coordinates
+	var fuel = 100, cash = 100, has_package = 0;
+	var MINCASHINCR = 10, MAXCASHINCR = 50;
 	
 	var data = {};
 	data.DISTSCALE = DISTSCALE;
@@ -35,7 +37,7 @@ Experiment = function() {
 
 	var updateProgress = function() {
 		for (key in exp_properties) {
-			$("#"+key).text(exp_properties[key]);
+			$("."+key).text(exp_properties[key]);
 		}
 		$("#distance").val("");
 	};
@@ -54,8 +56,6 @@ Experiment = function() {
 		var CONDITIONS = 4;
 		var DISTGROUPCOND = 2, EQUIDISTCOND = 1, FUNCGROUPCOND=4, COLGROUPCOND=3;
 		
-		DISTJUDGMENTS = 4;
-		
 		var ct = permuted_taskno[exp_properties.taskno-1]; //current task number, randomly permuted
 		//var condition = ct % CONDITIONS + 1; //cycle through conditions
 		condition = FUNCGROUPCOND;
@@ -68,27 +68,28 @@ Experiment = function() {
 		else if (condition == EQUIDISTCOND) { // equidistant, no clusters
 			map.equidistantMap();
 		}
-		else { // equidistant 
+		else { // equidistant, group by function or color
+			if (fuel < 20 && condition==FUNCGROUPCOND) groups = 3; // ensure there is a petrol station when fuel is low
 			//cluster by color [c3] or function [c4] 
 			map.equidistantMap(groups, condition==FUNCGROUPCOND);
 		}
 	};
 	this.exp2judged = function() {
 		// distance judged - ask for next judgment
-		if (exp_properties.expno == 1) {
-			nextTask();
+		cdistEst++;
+		if (cdistEst < DISTJUDGMENTS) {
+			updateTaskInstruction();
 		}
 		else {
-			cdistEst++;
-			if (cdistEst < DISTJUDGMENTS) {
-				askForDistEst();
-			}
-			else {
-				//showMapOverlay();
-				nextTask();
-			}
+			//showMapOverlay();
+			flashCongrats();			
+			nextTask();
 		}
 	};	
+	var flashCongrats = function() {
+		$("#instructions_center").hide();$("#blocker").show();$("#congrats").show();
+		setTimeout('$("#instructions_center").show();$("#blocker").hide();$("#congrats").hide();', 2000);
+	};
 	
 	var updateTaskInstruction = function() {
 		var fromid, toid;
@@ -96,11 +97,11 @@ Experiment = function() {
 			$(".deliver_task").show();
 			$(".estimate_task").hide();
 			
-			
+			pair = getBuildingPairForDelivery();
 		}
 		else {
-			$(".deliver_task").show();
-			$(".estimate_task").hide();
+			$(".deliver_task").hide();
+			$(".estimate_task").show();
 			
 			pair = getBuildingPairForDistanceEstimation();
 			
@@ -201,6 +202,10 @@ Experiment = function() {
 		}
 	};
 	
+	var getBuildingPairForDelivery = function() {
+		//map . getIdsByFunctionName
+	};
+	
 	var getBuildingPairForDistanceEstimation = function() {
 		var fromid = -1, toid = -1;
 		
@@ -244,6 +249,7 @@ Experiment = function() {
 	
 	
 	this.run = function() {
+		this.timerLoop();
 		nextExperiment();
 	};
 	
@@ -286,6 +292,7 @@ Experiment = function() {
 				mapcanvasshown = false;
 				$("#instructions_center").show();
 				$("#mapcanvas").hide();
+				$("#mapinstructions").hide();
 				$("#blocker").hide();
 				
 				nextTask();
@@ -309,6 +316,38 @@ Experiment = function() {
 			}
 		}
 	};
+	this.onUse = function() {
+		var mind = Infinity, minid = -1;
+		for (var i = 0; i < objects.length; i++) {
+			var d = getPointToEdgeDistance(controls.getObject(), objects[i]);
+			if (d < mind) {
+				mind = d;
+				minid = i;
+			}
+		}
+		if (mind < BUILDINGWIDTH) {
+			var func = map.labels[minid].toLowerCase();
+			if (func.indexOf("gas") > -1) { // gas station - fill up
+				cash -= 100 - fuel;
+				fuel = 100;
+				$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
+			}
+			else if (func.indexOf("supplier") > -1) { // supplier - get package
+				has_package++;
+				$("#package").removeClass("package_empty");
+				$("#package").addClass("package");
+				$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
+			}
+			else if (func.indexOf("customer") > -1 && has_package > 0) { // customer - deliver package
+				has_package--;
+				$("#package").addClass("package_empty");
+				$("#package").removeClass("package");
+				$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
+				cash += Math.round(Math.random()*(MAXCASHINCR-MINCASHINCR)) + MINCASHINCR;
+			}
+		}
+	};
+	
 	var showDistance = function(est, reald) {
 		if (exp_properties.expno == 1 && exp_properties.taskno <= 5) { //exp1 first 5 tasks - show correct distance to user
 			delta = Math.abs(est - reald);
@@ -319,6 +358,31 @@ Experiment = function() {
 	
 	this.update = function() {
 		map.update();
+	};
+	this.timerLoop = function() {
+		if (exp_properties.expno > 1) {
+			//use up fuel in exp 2 and 3
+			if (controls.moving)
+				fuel-=0.5;
+				
+			if (fuel < 20) {
+				$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
+			}
+			if (fuel < 0) {
+				fuel = 0;
+				controls.v = controls.slow_v;
+			}
+			else {
+				controls.v = controls.default_v;
+			}
+			
+			$("#fuellevel").width(fuel+"%");
+			var r = Math.round(255 * (1 - fuel/100)), g = 256*Math.round(255 * (fuel/100));
+			$("#fuellevel").css({background: intToCol(r)+intToCol(g).substring(1)+"00"});
+			$("#cashamount").text(cash + " $");
+		}
+		var me = this;
+		setTimeout(function() {me.timerLoop()}, 1000);
 	};
 };
 
@@ -332,6 +396,7 @@ function showMapOverlay() {
 	$("#blocker").show();
 	$("#instructions_center").hide();
 	$("#mapcanvas").show();
+	$("#mapinstructions").show();
 	
 	mapcanvasclicked = false;
 	mapcanvasshown = true;

@@ -34,15 +34,31 @@
 				<p align="center">Press enter when done</p>
 			</div>
 			<div id="mapcanvas"></div>
+			
+			<div id="congrats" class="hidden">
+				<h1>Task <span class="taskno">1</span> of experiment <span class="expno">1</span> finished :-)!</h1>
+			</div>
 		</div>
 		
 		<div id="feedback_box">
 			Congrats!
 		</div>
 		
+		<div id="statusbar">
+			<div id="package" class="package_empty"></div>
+			<div class="tank">
+				<span class="float">Fuel level: &nbsp;</span>
+				<div class="progressbar">
+					<div class="progress" id="fuellevel"></div>
+				</div>
+			</div>
+			<div class="cash">Cash: <span id="cashamount">100 $</span></div>
+			<div class="clear"></div>
+		</div>
+		
 		<div id="sidebar">
-			<h3 align="center">Experiment <span id="expno">1</span> / <span id="max_expno">1</span></h2>
-			<h4 align="center">Task <span id="taskno">1</span> / <span id="max_taskno">1</span></h2>
+			<h3 align="center">Experiment <span class="expno">1</span> / <span class="max_expno">1</span></h2>
+			<h4 align="center">Task <span class="taskno">1</span> / <span class="max_taskno">1</span></h2>
 			<p align="center" id="current_task">
 					<span class="estimate_task">Estimate the distance between<br/></span>				<span class="deliver_task hidden">Pick up package from </span>
 					
