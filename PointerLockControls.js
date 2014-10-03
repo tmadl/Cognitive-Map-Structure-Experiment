@@ -5,9 +5,9 @@
 THREE.PointerLockControls = function ( camera ) {
 
 	//this.default_v = 800;
-	this.default_v = 10000;
+	this.default_v = 15000;
 	this.v = this.default_v;
-	this.slow_v = 1000;
+	this.slow_v = 2000;
 	this.default_y = 20;
 	this.jumpingOn = true;
 
@@ -57,7 +57,10 @@ THREE.PointerLockControls = function ( camera ) {
 	};
 	
 	var onClick = function ( event ) {
-		if ($ && $("#blocker")) $("#blocker").hide();
+		/*if ($ && $("#blocker")) {
+			$("#blocker").hide();
+			scope.enabled = true;
+		}*/
 	};
 
 	var onKeyUp = function ( event ) {

@@ -273,11 +273,14 @@ var instructions = document.getElementById( 'instructions_center' );
 var havePointerLock = 'pointerLockElement' in document || 'mozPointerLockElement' in document || 'webkitPointerLockElement' in document;
 if ( havePointerLock ) {
 	var element = document.body;
-	var pointerlockchange = function ( event ) {
-		if ( document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element ) {
-			controls.enabled = true;
-			blocker.style.display = 'none';
-			controls.setDirection( 0, 0, 0 );
+	var pointerlockchange = function ( event ) {	
+		if (document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element ) {
+			if (experiment.blocked) instructions.style.display = 'none';
+			else {
+				controls.enabled = true;
+				blocker.style.display = 'none';
+				controls.setDirection( 0, 0, 0 );
+			}
 		} else {
 			controls.enabled = false;
 			blocker.style.display = '-webkit-box';
@@ -285,11 +288,11 @@ if ( havePointerLock ) {
 			blocker.style.display = 'box';
 			instructions.style.display = '';
 		}
-	}
+	};
 	var pointerlockerror = function ( event ) {
 		instructions.style.display = '';
 		alert("error");
-	}
+	};
 	// Hook pointer lock state change events
 	document.addEventListener( 'pointerlockchange', pointerlockchange, false );
 	document.addEventListener( 'mozpointerlockchange', pointerlockchange, false );
@@ -298,29 +301,32 @@ if ( havePointerLock ) {
 	document.addEventListener( 'mozpointerlockerror', pointerlockerror, false );
 	document.addEventListener( 'webkitpointerlockerror', pointerlockerror, false );
 	instructions.addEventListener( 'click', function ( event ) {
-		if (loaded) {
-			instructions.style.display = 'none';
+		instructions.style.display = 'none';
+		if (loaded && !experiment.blocked) {
 			// Ask the browser to lock the pointer
-			element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
-			if ( /Firefox/i.test( navigator.userAgent ) ) {
-				var fullscreenchange = function ( event ) {
-					if ( document.fullscreenElement === element || document.mozFullscreenElement === element || document.mozFullScreenElement === element ) {
-						document.removeEventListener( 'fullscreenchange', fullscreenchange );
-						document.removeEventListener( 'mozfullscreenchange', fullscreenchange );
-						element.requestPointerLock();
-					}
-				}
-				document.addEventListener( 'fullscreenchange', fullscreenchange, false );
-				document.addEventListener( 'mozfullscreenchange', fullscreenchange, false );
-				element.requestFullscreen = element.requestFullscreen || element.mozRequestFullscreen || element.mozRequestFullScreen || element.webkitRequestFullscreen;
-				element.requestFullscreen();
-			} else {
-				element.requestPointerLock();
-			}
+			lockPointer();
 		}
 	}, false );
 } else {
 	instructions.innerHTML = 'Your browser doesn\'t seem to support Pointer Lock API';
+}
+function lockPointer() {
+	element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
+	if ( /Firefox/i.test( navigator.userAgent ) ) {
+		var fullscreenchange = function ( event ) {
+			if ( document.fullscreenElement === element || document.mozFullscreenElement === element || document.mozFullScreenElement === element ) {
+				document.removeEventListener( 'fullscreenchange', fullscreenchange );
+				document.removeEventListener( 'mozfullscreenchange', fullscreenchange );
+				element.requestPointerLock();
+			}
+		};
+		document.addEventListener( 'fullscreenchange', fullscreenchange, false );
+		document.addEventListener( 'mozfullscreenchange', fullscreenchange, false );
+		element.requestFullscreen = element.requestFullscreen || element.mozRequestFullscreen || element.mozRequestFullScreen || element.webkitRequestFullscreen;
+		element.requestFullscreen();
+	} else {
+		element.requestPointerLock();
+	}
 }
 
 $(document).on("keydown", function (e) {
@@ -332,7 +338,8 @@ $(document).on("keydown", function (e) {
 		}
 	}
 	else if (e.which >= '0'.charCodeAt(0) && e.which <= '9'.charCodeAt(0)) {
-		if (controls.enabled) { // pointer is locked; help enter distance judgment
+		//if (controls.enabled) 
+		{ // pointer is locked; help enter distance judgment
 			$("#distance").val(v+String.fromCharCode(e.which));
 		}
 	}

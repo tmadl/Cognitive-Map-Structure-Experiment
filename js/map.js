@@ -5,25 +5,25 @@ var function_names = ["Customer", "Supplier", "Gas Station"];
 
 Map = function() {
 	this.building_coords=[];
-	this.cluster_ids=[];
+	this.cluster_assignments=[];
 	this.clusters = 0;
 	this.labels=[];
 	this.group_colors = [0xffffff];
 	
 	this.getIdsByCluster = function(cluster) {
 		var ids = [];
-		for (var i = 0; i < this.cluster_ids.length; i++) {
-			if (this.cluster_ids[i] == cluster)
-				ids.push(this.cluster_ids[i]);
+		for (var i = 0; i < this.cluster_assignments.length; i++) {
+			if (this.cluster_assignments[i] == cluster)
+				ids.push(i);
 		}
 		return ids;
 	};
 	
 	this.getIdsByFunctionName = function(functionname) {
 		var ids = [];
-		for (var i = 0; i < this.cluster_ids.length; i++) {
+		for (var i = 0; i < this.cluster_assignments.length; i++) {
 			if (this.labels[i].toLowerCase().indexOf(functionname.toLowerCase()) > -1)
-				ids.push(this.cluster_ids[i]);
+				ids.push(i);
 		}
 		return ids;
 	};
@@ -43,7 +43,7 @@ Map = function() {
 		for (var i=0; i<n; i++) {
 			var pos = rndNotTooClose(this.building_coords, function() {return randomDist(DEFAULTDIST*2);});
 			this.building_coords.push([pos[0], pos[1]]);
-			this.cluster_ids.push(0);
+			this.cluster_assignments.push(0);
 		}
 		this.renderMap(this.building_coords);
 		return [this.building_coords, null];
@@ -54,7 +54,7 @@ Map = function() {
 		
 		this.clusters = groups;
 		this.building_coords = [];
-		this.cluster_ids = [];
+		this.cluster_assignments = [];
 		this.group_colors = [];
 		for (var i = 0; i < groups; i++) this.group_colors.push(0xffffff);
 		
@@ -65,6 +65,7 @@ Map = function() {
 			fnames[0] = function_names[1];
 			fnames[1] = function_names[0];
 		}
+		
 		
 		var mu = new Array(groups), sigma = new Array(groups);
 		for (var i=0; i<groups; i++) {
@@ -82,7 +83,7 @@ Map = function() {
 			
 			var pos = rndNotTooClose(this.building_coords, function() {return normal_random(mu[group][0], sigma[group][0]);}, function() {return normal_random(mu[group][1], sigma[group][1]);});
 			this.building_coords.push([pos[0], pos[1]]);
-			this.cluster_ids.push(group);
+			this.cluster_assignments.push(group);
 			
 			if (by_function) {
 				function_numbers[clid]++;
@@ -100,7 +101,7 @@ Map = function() {
 		}
 		//
 		
-		return [this.building_coords, this.cluster_ids];
+		return [this.building_coords, this.cluster_assignments];
 	};
 	
 	var eqclusters2 = [[1,1,0,0,0,0], [0,0,0,1,1,0], [0,0,0,0,1,1], [1,0,0,1,0,0], [0,1,0,0,0,1]];
@@ -115,15 +116,17 @@ Map = function() {
 		
 		this.clusters = groups;
 		this.building_coords = [];
-		this.cluster_ids = [];
+		this.cluster_assignments = [];
 		this.group_colors = by_function ? [] : rndColors(groups);
 		if (by_function)
 			for (var i = 0; i < groups; i++) this.group_colors.push(0xffffff);
 		
-		var fid = shuffle(function_names.length);
-		var fnames = []; 
-		for (var i = 0; i < groups; i++) {
-			fnames.push(function_names[fid[i]]);
+		//var fid = shuffle(function_names.length);
+		//dont permute - first two must be customer and supplier (or other way round)
+		var fnames = function_names.slice(); 
+		if (Math.round(Math.random())) {
+			fnames[0] = function_names[1];
+			fnames[1] = function_names[0];
 		}
 		
 		var d = MINDIST*2 + Math.random()*DEFAULTDIST;
@@ -150,7 +153,7 @@ Map = function() {
 			var c = this.group_colors[clid];
 
 			this.building_coords.push([hx, hy]);
-			this.cluster_ids.push(clid);
+			this.cluster_assignments.push(clid);
 			if (by_function) {
 				function_numbers[clid]++;
 				functions.push(fnames[clid]+" "+function_numbers[clid]);
@@ -160,7 +163,7 @@ Map = function() {
 		}
 		this.renderMap(this.building_coords, colors, functions);
 		
-		return [this.building_coords, this.cluster_ids];
+		return [this.building_coords, this.cluster_assignments];
 	};
 
 	this.renderMap = function(coords, colors, functions) {
@@ -214,7 +217,7 @@ Map = function() {
 		}
 		
 		this.building_coords=[];
-		this.cluster_ids=[];
+		this.cluster_assignments=[];
 		this.labels=[];
 	};
 };

@@ -13,11 +13,12 @@ function init() {
 }
 
 
-Experiment = function() {
+Experiment = function() {	
 	var map = new Map();
 	var coords; // current building coordinates
-	var fuel = 100, cash = 100, has_package = 0;
+	var fuel = 100, cash = 100, has_package_from = null, delivered_to = null;
 	var MINCASHINCR = 10, MAXCASHINCR = 50;
+	var delivery_game = false;
 	
 	var data = {};
 	data.DISTSCALE = DISTSCALE;
@@ -31,6 +32,7 @@ Experiment = function() {
 	var distEstTypes = []; // within-cluster or across-cluster
 	var distEstAsked = []; // already asked 
 	var cdistEst = -1;
+	var fromid, toid; //(for delivery or distance est.)
 	
 	//var taskNumbersPerExperiment = [-1, 30, 24, 24, 24];
 	var taskNumbersPerExperiment = [-1, 2, 24, 24, 24];
@@ -82,27 +84,30 @@ Experiment = function() {
 		}
 		else {
 			//showMapOverlay();
-			flashCongrats();			
+			$("#blocker").css('background-color', 'rgba(0,0,0,0.5)');
+			this.blocked = false;
+			flashCongrats();	
+
 			nextTask();
 		}
 	};	
 	var flashCongrats = function() {
 		$("#instructions_center").hide();$("#blocker").show();$("#congrats").show();
-		setTimeout('$("#instructions_center").show();$("#blocker").hide();$("#congrats").hide();', 2000);
+		setTimeout('$("#instructions_center").show();$("#blocker").hide();$("#congrats").hide();lockPointer();', 2000);
 	};
 	
 	var updateTaskInstruction = function() {
-		var fromid, toid;
-		if (this.delivery_game) {
+		if (delivery_game) {
 			$(".deliver_task").show();
 			$(".estimate_task").hide();
 			
 			pair = getBuildingPairForDelivery();
+			fromid = pair[0];
+			toid = pair[1];
 		}
 		else {
 			$(".deliver_task").hide();
 			$(".estimate_task").show();
-			
 			pair = getBuildingPairForDistanceEstimation();
 			
 			fromid = pair[0];
@@ -137,7 +142,7 @@ Experiment = function() {
 			experiment["exp"+exp_properties.expno+"task"]();
 			//store map data
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_coords = map.building_coords;
-			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].cluster_ids = map.cluster_ids;
+			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].cluster_assignments = map.cluster_assignments;
 			
 			// reset camera to somewhere near the existing buildings (but not within them)
 			var i = Math.floor(Math.random()*objects.length);
@@ -162,10 +167,10 @@ Experiment = function() {
 			
 			// delivery game and first distance judgment
 			if (exp_properties.expno == 0) {
-				this.delivery_game = false;
+				delivery_game = false;
 			}
 			else {
-				this.delivery_game = true;
+				delivery_game = true;
 				this.delivered = 0;
 			}
 				
@@ -203,7 +208,11 @@ Experiment = function() {
 	};
 	
 	var getBuildingPairForDelivery = function() {
-		//map . getIdsByFunctionName
+		var ids1 = map.getIdsByFunctionName("supplier");
+		var ids2 = map.getIdsByFunctionName("customer");
+		var rndid1 = drawRandom(ids1, 1);
+		var rndid2 = drawRandom(ids2, 1);
+		return [rndid1, rndid2];
 	};
 	
 	var getBuildingPairForDistanceEstimation = function() {
@@ -262,7 +271,6 @@ Experiment = function() {
 	 
 	this.onEnter = function() {
 		//participant pressed enter; record distance estimate
-		
 		if (mapcanvasshown) {
 			//record drawn map
 			if (!mapcanvasclicked) {
@@ -296,6 +304,25 @@ Experiment = function() {
 				$("#blocker").hide();
 				
 				nextTask();
+			}
+		}
+		else if (delivery_game) {
+			if (has_package_from != fromid || delivered_to != toid) {
+				alert("Please pick up a package from "+map.labels[fromid]+" and deliver it to "+map.labels[toid]+"! Press enter when finished.");
+			}
+			else {
+				$("#pressenter").css('color', '#ddeeff');
+				has_package_from = null;
+				delivered_to = null;
+				delivery_game = false;
+				$("#blocker").show();
+				$("#instructions_center").hide();
+				$("#congrats").hide();
+				controls.enabled = false;
+				$("#blocker").css('background-color', 'rgba(150,150,150,1)');
+				this.blocked = true;
+				
+				updateTaskInstruction();
 			}
 		}
 		else {
@@ -333,17 +360,19 @@ Experiment = function() {
 				$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
 			}
 			else if (func.indexOf("supplier") > -1) { // supplier - get package
-				has_package++;
+				has_package_from = minid;
 				$("#package").removeClass("package_empty");
 				$("#package").addClass("package");
 				$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
 			}
-			else if (func.indexOf("customer") > -1 && has_package > 0) { // customer - deliver package
-				has_package--;
+			else if (func.indexOf("customer") > -1 && has_package_from != null) { // customer - deliver package
+				delivered_to = minid;
 				$("#package").addClass("package_empty");
 				$("#package").removeClass("package");
 				$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
 				cash += Math.round(Math.random()*(MAXCASHINCR-MINCASHINCR)) + MINCASHINCR;
+				
+				if (has_package_from == fromid && delivered_to == toid) $("#pressenter").css('color', '#00ff00');
 			}
 		}
 	};
@@ -416,7 +445,7 @@ function showMapOverlay() {
 				height: imgsize,
 				width: imgsize,
 			}).add($("<div id='blbl_bid"+i+"' class='buildinglbl'>"+experiment.getMap().labels[i]+"</div>"))
-			.add($("<div class='buildingcolor' id='bid"+i+"' style='background:"+intToCol(experiment.getMap().group_colors[experiment.getMap().cluster_ids[i]])+"'></div>").attr({
+			.add($("<div class='buildingcolor' id='bid"+i+"' style='background:"+intToCol(experiment.getMap().group_colors[experiment.getMap().cluster_assignments[i]])+"'></div>").attr({
 				onload: function() {
 					$(this).draggable({ containment: "#mapcanvas" });
 					$(this).mouseup(function() {
