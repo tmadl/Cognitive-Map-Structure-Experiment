@@ -24,8 +24,8 @@ Experiment = function() {
 	data.DISTSCALE = DISTSCALE;
 	
 	var exp_properties = {};
-	exp_properties.expno = 1; //0!!!
-	exp_properties.max_expno = 2;
+	exp_properties.expno = 2; //0!!!
+	exp_properties.max_expno = 3;
 	
 	var DISTJUDGMENTS = 6;
 	var distanceEstimation = [-1, -1, -1, -1]; //distance, from, to, type
@@ -45,6 +45,7 @@ Experiment = function() {
 	};
 	
 	this.exp1task = function() {
+		delivery_game = false;
 		DISTJUDGMENTS = 1;
 		// generate and store map of experiment 1 (two random buildings)
 		map.randomMap(2);
@@ -56,24 +57,31 @@ Experiment = function() {
 	
 	this.exp2task = function() {
 		var CONDITIONS = 4;
-		var DISTGROUPCOND = 2, EQUIDISTCOND = 1, FUNCGROUPCOND=4, COLGROUPCOND=3;
+		var DISTGROUPCOND = 2, REGCOND = 1, FUNCGROUPCOND=4, COLGROUPCOND=3;
 		
 		var ct = permuted_taskno[exp_properties.taskno-1]; //current task number, randomly permuted
-		//var condition = ct % CONDITIONS + 1; //cycle through conditions
-		condition = FUNCGROUPCOND;
+		var condition = ct % CONDITIONS + 1; //cycle through conditions
 		
 		// generate and store maps of experiment 2
 		var groups = 2 + Math.round(Math.random()); // 2 or 3 groups
 		if (condition == DISTGROUPCOND) {
 			map.groupedMap(groups);
 		}
-		else if (condition == EQUIDISTCOND) { // equidistant, no clusters
-			map.equidistantMap();
+		else if (condition == REGCOND) { // regular, no sp. clusters
+			map.regularMap();
 		}
 		else { // equidistant, group by function or color
 			if (fuel < 20 && condition==FUNCGROUPCOND) groups = 3; // ensure there is a petrol station when fuel is low
 			//cluster by color [c3] or function [c4] 
-			map.equidistantMap(groups, condition==FUNCGROUPCOND);
+			map.regularMap(groups, condition==FUNCGROUPCOND);
+		}
+		
+		if (condition == FUNCGROUPCOND) {
+			delivery_game = true;
+			this.delivered = 0;
+		}
+		else {
+			delivery_game = false;
 		}
 	};
 	this.exp2judged = function() {
@@ -91,6 +99,32 @@ Experiment = function() {
 			nextTask();
 		}
 	};	
+	
+	this.exp3task = function() {
+		delivery_game = false;
+		DISTJUDGMENTS = 4;
+		// generate and store map of experiment 3 (two building clusters and one additional building to determine decision boundary)
+
+		map.decisionboundaryMap();
+		delivery_game = true;
+	};
+	this.exp3judged = function() {
+		// distance judged - ask for next judgment
+		cdistEst++;
+		if (cdistEst < DISTJUDGMENTS) {
+			updateTaskInstruction();
+		}
+		else {
+			//showMapOverlay();
+			$("#blocker").css('background-color', 'rgba(0,0,0,0.5)');
+			this.blocked = false;
+			flashCongrats();	
+
+			nextTask();
+		}
+	};
+	
+	
 	var flashCongrats = function() {
 		$("#instructions_center").hide();$("#blocker").show();$("#congrats").show();
 		setTimeout('$("#instructions_center").show();$("#blocker").hide();$("#congrats").hide();lockPointer();', 2000);
@@ -106,9 +140,13 @@ Experiment = function() {
 			toid = pair[1];
 		}
 		else {
+			var fixed_fromid = null;
+			if (exp_properties.expno == 3) 
+				fixed_fromid = objects.length-1; //in exp 3, always ask distance to middle (dec.boundary) building
+			
 			$(".deliver_task").hide();
 			$(".estimate_task").show();
-			pair = getBuildingPairForDistanceEstimation();
+			pair = getBuildingPairForDistanceEstimation(fixed_fromid);
 			
 			fromid = pair[0];
 			toid = pair[1];
@@ -164,15 +202,6 @@ Experiment = function() {
 					distEstTypes[i] = 1;
 			}
 			distEstTypes = shuffle(distEstTypes);
-			
-			// delivery game and first distance judgment
-			if (exp_properties.expno == 0) {
-				delivery_game = false;
-			}
-			else {
-				delivery_game = true;
-				this.delivered = 0;
-			}
 				
 			updateTaskInstruction();
 		}
@@ -215,16 +244,16 @@ Experiment = function() {
 		return [rndid1, rndid2];
 	};
 	
-	var getBuildingPairForDistanceEstimation = function() {
+	var getBuildingPairForDistanceEstimation = function(fixed_fromid) {
 		var fromid = -1, toid = -1;
 		
 		// which distance is to be estimated - random, but make sure that its not asked twice
 		
-		if (map.clusters == 0) {
+		if (!map.clusters) {
 			do {
 				var ids = map.getIdsByCluster(0);
 				var rndids = drawRandom(ids, 2);
-				fromid = rndids[0];
+				fromid = fixed_fromid ? fixed_fromid : rndids[0];
 				toid = rndids[1];
 			} while (containsVector(distEstAsked, [fromid, toid]));
 		}
@@ -238,7 +267,7 @@ Experiment = function() {
 				} while(ids.length < 2);
 				if (distEstTypes[cdistEst] == 0) { // draw 2 within cluster
 					var rndids = drawRandom(ids, 2);
-					fromid = rndids[0];
+					fromid = fixed_fromid ? fixed_fromid : rndids[0];
 					toid = rndids[1];
 				}
 				else if (distEstTypes[cdistEst] == 1) { // draw across cluster
@@ -247,7 +276,7 @@ Experiment = function() {
 						cluster2 = Math.floor(Math.random()*map.clusters);
 					} while (cluster2 == cluster);
 					var ids2 = map.getIdsByCluster(cluster2);
-					fromid = drawRandom(ids, 1)[0];
+					fromid = fixed_fromid ? fixed_fromid : drawRandom(ids, 1)[0];
 					toid = drawRandom(ids2, 1)[0];
 				}
 			} while ((containsVector(distEstAsked, [fromid, toid]) || containsVector(distEstAsked, [toid, fromid])) && j++ < maxtries);
@@ -354,7 +383,7 @@ Experiment = function() {
 		}
 		if (mind < BUILDINGWIDTH) {
 			var func = map.labels[minid].toLowerCase();
-			if (func.indexOf("gas") > -1) { // gas station - fill up
+			if (func.indexOf("gas") > -1 || fuel < 10) { // gas station - fill up
 				cash -= 100 - fuel;
 				fuel = 100;
 				$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});

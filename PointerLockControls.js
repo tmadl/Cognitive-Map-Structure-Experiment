@@ -61,6 +61,7 @@ THREE.PointerLockControls = function ( camera ) {
 			$("#blocker").hide();
 			scope.enabled = true;
 		}*/
+		pointerlockchange();
 	};
 
 	var onKeyUp = function ( event ) {

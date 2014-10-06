@@ -10,6 +10,14 @@ Map = function() {
 	this.labels=[];
 	this.group_colors = [0xffffff];
 	
+	this.getCentroid = function(ids) {
+		var xs = 0, ys = 0;
+		for (var i = 0; i < ids.length; i++) {
+			xs += this.building_coords[ids[i]][0];
+			ys += this.building_coords[ids[i]][1];
+		}
+		return [xs/ids.length, ys/ids.length];
+	};
 	this.getIdsByCluster = function(cluster) {
 		var ids = [];
 		for (var i = 0; i < this.cluster_assignments.length; i++) {
@@ -49,15 +57,15 @@ Map = function() {
 		return [this.building_coords, null];
 	};
 
-	this.groupedMap = function(groups, by_function) {
-		var BUILDINGS = 7;
+	this.decisionboundaryMap = function(features) {
+		var BUILDINGS = 6;
+		var groups = 2;
 		
 		this.clusters = groups;
 		this.building_coords = [];
 		this.cluster_assignments = [];
-		this.group_colors = [];
-		for (var i = 0; i < groups; i++) this.group_colors.push(0xffffff);
-		
+		this.group_colors = rndColors(groups);
+
 		//var fid = shuffle(function_names.length);
 		//dont permute - first two must be customer and supplier (or other way round)
 		var fnames = function_names.slice(); 
@@ -65,7 +73,6 @@ Map = function() {
 			fnames[0] = function_names[1];
 			fnames[1] = function_names[0];
 		}
-		
 		
 		var mu = new Array(groups), sigma = new Array(groups);
 		for (var i=0; i<groups; i++) {
@@ -76,24 +83,110 @@ Map = function() {
 
 		function_numbers = [0,0,0];
 		
+		var permuted_id = shuffle(BUILDINGS);
+		
 		var colors = [], functions = [];
 		for (var i=0; i<BUILDINGS; i++) {
-			var group = permuted_id[i]%groups; 
-			var c = group_colors[clid];
+			var clid = permuted_id[i]%groups; 
+			var c = this.group_colors[clid];
 			
-			var pos = rndNotTooClose(this.building_coords, function() {return normal_random(mu[group][0], sigma[group][0]);}, function() {return normal_random(mu[group][1], sigma[group][1]);});
+			var pos = rndNotTooClose(this.building_coords, function() {return normal_random(mu[clid][0], sigma[clid][0]);}, function() {return normal_random(mu[clid][1], sigma[clid][1]);});
 			this.building_coords.push([pos[0], pos[1]]);
-			this.cluster_assignments.push(group);
+			this.cluster_assignments.push(clid);
+			
+			function_numbers[clid]++;
+			functions.push(fnames[clid]+" "+function_numbers[clid]);
+			colors.push(c);
+		}
+		
+		// additional 1 building, characterized by 3D distance vector
+		/*
+		* characterize building by distance to the 2 clusters in 3D feature space: [position, color, function]
+		* 0...feature equivalent to cluster 1; 0.5...feature halfway between the two clusters; 1...feature equivalent to cluster 2
+		*/
+		if (!features) {
+			features = [Math.random()*0.6+0.2, Math.random()*0.6+0.2, Math.random()*0.6+0.2]; //random features (min 20% distance from both clusters)
+		}
+		var centroid1 = this.getCentroid(this.getIdsByCluster(0)), centroid2 = this.getCentroid(this.getIdsByCluster(1));
+		var dx = centroid2[0] - centroid1[0], dy = centroid2[1] - centroid1[1];
+		var hx = centroid1[0] + dx*features[0], hy = centroid1[1] + dy*features[0]; 
+		//alert(centroid1+"\n"+centroid2+"\n"+features[0]+"\n"+[hx, hy]);
+		var col = interpolateColor(features[1], this.group_colors[0], this.group_colors[1]);
+		var fun;
+		if (features[2] > 0.5) { 
+			function_numbers[1]++;
+			fun = fnames[1]+" "+function_numbers[1];
+		}
+		else {
+			function_numbers[0]++;
+			fun = fnames[0]+" "+function_numbers[0];
+		}
+		this.building_coords.push([hx, hy]);
+		this.cluster_assignments.push(-1);
+		colors.push(col);
+		functions.push(fun);
+		
+		this.renderMap(this.building_coords, colors, functions);
+		//
+		for (var i=0; i<groups; i++) {
+			this.renderClusterInMinimap([mu[i][0], mu[i][1], sigma[i][0], sigma[i][1]]);
+		}
+		//
+		
+		return [this.building_coords, this.cluster_assignments];
+	};
+
+	this.groupedMap = function(groups, by_function, by_colors) {
+		var BUILDINGS = 5;
+		
+		this.clusters = groups;
+		this.building_coords = [];
+		this.cluster_assignments = [];
+		this.group_colors = [];
+		if (!by_colors) {
+			for (var i = 0; i < groups; i++) this.group_colors.push(0xffffff);
+		}
+		else {
+			this.group_colors = rndColors(groups);
+		}
+		
+		//var fid = shuffle(function_names.length);
+		//dont permute - first two must be customer and supplier (or other way round)
+		var fnames = function_names.slice(); 
+		if (Math.round(Math.random())) {
+			fnames[0] = function_names[1];
+			fnames[1] = function_names[0];
+		}
+		
+		var mu = new Array(groups), sigma = new Array(groups);
+		for (var i=0; i<groups; i++) {
+			var pos = rndNotTooClose(mu, randomDist, randomDist, MINGROUPDIST);
+			mu[i] = [pos[0], pos[1]];
+			sigma[i] = [randomDist(MAXGROUPSIZE, MINGROUPSIZE), randomDist(MAXGROUPSIZE, MINGROUPSIZE)];
+		}
+
+		function_numbers = [0,0,0];
+		
+		var permuted_id = shuffle(BUILDINGS);
+		
+		var colors = [], functions = [];
+		for (var i=0; i<BUILDINGS; i++) {
+			var clid = permuted_id[i]%groups; 
+			var c = this.group_colors[clid];
+			
+			var pos = rndNotTooClose(this.building_coords, function() {return normal_random(mu[clid][0], sigma[clid][0]);}, function() {return normal_random(mu[clid][1], sigma[clid][1]);});
+			this.building_coords.push([pos[0], pos[1]]);
+			this.cluster_assignments.push(clid);
 			
 			if (by_function) {
 				function_numbers[clid]++;
 				functions.push(fnames[clid]+" "+function_numbers[clid]);
 			}
-			else
+			if (!by_function || by_colors) {
 				colors.push(c);
+			}
 		}
-		//this.renderMap(this.building_coords, colors, functions);
-		this.renderMap(this.building_coords, colors);
+		this.renderMap(this.building_coords, colors, functions);
 		
 		//
 		for (var i=0; i<groups; i++) {
@@ -107,7 +200,10 @@ Map = function() {
 	var eqclusters2 = [[1,1,0,0,0,0], [0,0,0,1,1,0], [0,0,0,0,1,1], [1,0,0,1,0,0], [0,1,0,0,0,1]];
 	var eqclusters3 = [[1,1,0,0,0,2], [0,0,0,1,1,2], [0,0,0,2,1,1], [1,0,0,1,0,1], [0,1,0,2,0,1]];
 	var eqclusters;
-	this.equidistantMap = function(groups, by_function) {
+	this.regularMap = function(groups, by_function, equidistant) {
+		//
+		if (!equidistant) equidistant = false; // equidistant, or added position noise
+		
 		var gridsize = 3;
 		eqclusters = groups == 2 ? eqclusters2 : eqclusters3; 
 		
@@ -151,6 +247,11 @@ Map = function() {
 				var hx = xi * d + (yi%2)*d/2, hy = yi * d * Math.sqrt(3)/2; // triangular grid
 			var clid = clid_vec[i-3];
 			var c = this.group_colors[clid];
+			
+			if (!equidistant) {
+				hx += Math.random()*d/2 - d/4;
+				hy += Math.random()*d/2 - d/4;
+			}
 
 			this.building_coords.push([hx, hy]);
 			this.cluster_assignments.push(clid);
@@ -187,7 +288,12 @@ Map = function() {
 			var c = minimapCoords([objects[i].position.x, objects[i].position.z]);
 			var col = colors && colors[i] ? intToCol(colors[i]) : "#ffffff";
 			html += "<div class='dot' style='left:"+c[0]+"px;top:"+c[1]+"px;height:"+c[2]+"px;width:"+c[3]+"px;background:"+col+"' title='"+this.labels[i]+"'></div>";
-			html += "<div class='dotlabel' style='left:"+(c[0]+3)+"px;top:"+c[1]+"px;color:"+col+"' title='"+this.labels[i]+"'>"+(i+1)+"</div>";
+			try {
+				html += "<div class='dotlabel' style='left:"+(c[0]+3)+"px;top:"+c[1]+"px;color:"+col+"' title='"+this.labels[i]+"'>"+this.labels[i].charAt(0)+(i+1)+"</div>";
+			}
+			catch (e) {
+				alert(e);
+			}
 		}
 		var c = minimapCoords([controls.getObject().position.x, controls.getObject().position.z]);
 		html += "<div id='me' class='dot' style='left:"+c[0]+"px;top:"+c[1]+"px;border:1px solid red;'></div>";
@@ -330,6 +436,7 @@ var rndNotTooClose = function(coords, rndFunctionX, rndFunctionY, mind) {
 		x = maxx+mind/Math.sqrt(2);
 		y = maxy+mind/Math.sqrt(2);
 	}
+	if (isNaN(x) || isNaN(y)) return rndNotTooClose(coords, rndFunctionX, rndFunctionY, mind);
 	return [x, y];
 };
 /*
@@ -405,7 +512,13 @@ function intToCol(i, len) {
 	return "#"+col;
 }
 
-
+function interpolateColor(fraction, col1, col2) {
+	var r1=Math.floor(col1/65536), g1=Math.floor(col1/256)%256, b1=col1%256;
+	var r2=Math.floor(col2/65536), g2=Math.floor(col2/256)%256, b2=col2%256;
+	var dr = (r2 - r1), dg = (g2 - g1), db = (b2 - b1); 
+	var r = Math.round(r1 + dr*fraction)%256, g = Math.round(g1 + dg*fraction)%256, b = Math.round(b1 + db*fraction)%256;
+	return (65536*r+256*g+b);
+}
 
 // random
 
@@ -426,5 +539,8 @@ function normal_random(mean, variance) {
 
     X = Math.sqrt(-2 * Math.log(S) / S) * V1;
     X = mean + Math.sqrt(variance) * X;
+    
+    if (isNaN(X)) return normal_random(mean, variance);
+    
     return X;
 }

@@ -290,8 +290,12 @@ if ( havePointerLock ) {
 		}
 	};
 	var pointerlockerror = function ( event ) {
+		//alert("error");
+		controls.enabled = false;
+		blocker.style.display = '-webkit-box';
+		blocker.style.display = '-moz-box';
+		blocker.style.display = 'box';
 		instructions.style.display = '';
-		alert("error");
 	};
 	// Hook pointer lock state change events
 	document.addEventListener( 'pointerlockchange', pointerlockchange, false );
@@ -333,7 +337,8 @@ $(document).on("keydown", function (e) {
 	v=$("#distance").val();
 	if (e.which === 8 && !$(e.target).is("input, textarea")) {
     	e.preventDefault();
-    	if (controls.enabled) { // pointer is locked; help delete from distance judgment
+    	//if (controls.enabled) 
+    	{ // help delete from distance judgment
 			$("#distance").val(v.substring(0, v.length-1));
 		}
 	}
