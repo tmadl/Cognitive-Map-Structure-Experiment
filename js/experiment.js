@@ -104,12 +104,25 @@ Experiment = function() {
 		delivery_game = false;
 		DISTJUDGMENTS = 4;
 		// generate and store map of experiment 3 (two building clusters and one additional building to determine decision boundary)
-
+		// additional building: random for the first 3 trials, then use active learning
+		if (exp_properties.taskno <= 3) {
+			features = [Math.random()*0.6+0.2, Math.random()*0.6+0.2, Math.random()*0.6+0.2];
+		}
+		else {
+			var data = [];
+			var labels = [];
+			for (var i=0; i<=cdistEst; i++) {
+				var d = data["exp"+exp_properties.expno]["task"+exp_properties.taskno].distance_estimations[i];
+				var rd = data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_distances[i];
+			}
+		}
+		// generate map
 		map.decisionboundaryMap();
 		delivery_game = true;
 	};
 	this.exp3judged = function() {
-		// distance judged - ask for next judgment
+		// distance judged		
+		// ask for next judgment
 		cdistEst++;
 		if (cdistEst < DISTJUDGMENTS) {
 			updateTaskInstruction();
@@ -126,8 +139,9 @@ Experiment = function() {
 	
 	
 	var flashCongrats = function() {
-		$("#instructions_center").hide();$("#blocker").show();$("#congrats").show();
-		setTimeout('$("#instructions_center").show();$("#blocker").hide();$("#congrats").hide();lockPointer();', 2000);
+		swal("Good job!", "You finished task "+exp_properties.taskno+" of experiment "+exp_properties.expno+"!", "success");
+		//$("#instructions_center").hide();$("#blocker").show();$("#congrats").show();
+		//setTimeout('$("#instructions_center").show();$("#blocker").hide();$("#congrats").hide();lockPointer();', 2000);
 	};
 	
 	var updateTaskInstruction = function() {
@@ -174,6 +188,7 @@ Experiment = function() {
 			//clear and initialize task data (real and estimated distances and building ids between which the distance was judged)
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno] = {};
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].distance_estimations = [];
+			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_distances = [];
 			updateProgress();
 			
 			//call current experiment task function
@@ -213,7 +228,7 @@ Experiment = function() {
 	var nextExperiment = function() {
 		if (exp_properties.expno >= exp_properties.max_expno) {
 			// TODO - transmit data, show code
-			alert("Finished experiment. Plz wait for code");
+			swal("Finished experiment!", "Here is your code:", "success");
 		}
 		else {
 			//show next instructions
@@ -303,7 +318,7 @@ Experiment = function() {
 		if (mapcanvasshown) {
 			//record drawn map
 			if (!mapcanvasclicked) {
-				alert("You made no changes to the map. Please create a map of where you remember the buildings by dragging them into their correct place with your mouse.");
+				swal("You made no changes to the map. Please create a map of where you remember the buildings by dragging them into their correct place with your mouse.");
 			}
 			else {
 				rememberedbuildingx = [];
@@ -337,7 +352,7 @@ Experiment = function() {
 		}
 		else if (delivery_game) {
 			if (has_package_from != fromid || delivered_to != toid) {
-				alert("Please pick up a package from "+map.labels[fromid]+" and deliver it to "+map.labels[toid]+"! Press enter when finished.");
+				swal("Please pick up a package from "+map.labels[fromid]+" and deliver it to "+map.labels[toid]+"! Press enter when finished.");
 			}
 			else {
 				$("#pressenter").css('color', '#ddeeff');
@@ -358,7 +373,7 @@ Experiment = function() {
 			//record distance estimate
 			est = parseInt($("#distance").val());
 			if (isNaN(est)) {
-				alert("Please enter an estimated distance!\n(Make sure it is a valid number)");
+				swal("Please enter an estimated distance!\n(Make sure it is a valid number)");
 			}
 			else {
 				// get real distance
@@ -366,6 +381,7 @@ Experiment = function() {
 				// store estimated and real distance
 				distanceEstimation[0] = est;
 				data["exp"+exp_properties.expno]["task"+exp_properties.taskno].distance_estimations.push(distanceEstimation);
+				data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_distances.push(reald);
 				showDistance(est, reald);
 				
 				experiment["exp"+exp_properties.expno+"judged"]();
@@ -410,7 +426,7 @@ Experiment = function() {
 		if (exp_properties.expno == 1 && exp_properties.taskno <= 5) { //exp1 first 5 tasks - show correct distance to user
 			delta = Math.abs(est - reald);
 			overunder = est > reald ? "over": "under";
-			alert("The correct distance was "+reald+"\nYou "+overunder+"estimated by "+delta+"\n\n(This information will only be shown "+(5 - exp_properties.taskno)+" more times)");
+			swal("The correct distance was "+reald, "You "+overunder+"estimated by "+delta+"\n\n(This information will only be shown "+(5 - exp_properties.taskno)+" more times)");
 		}
 	};
 	

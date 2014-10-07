@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Spatial Memory Experiment</title>
+  <script src="jquery-1.7.2.min.js"></script>
+  
+  <script src="numeric-1.2.6.min.js"></script>
+</head>
+<body>
+	<script>
+
+function sigmoid(x) {
+    return 1.0 / (1.0 + Math.exp(-x));
+
+};
+
+function gradientDescent(theta, gradient, alpha) {
+    return numeric.sub(theta, numeric.mul(gradient(theta), alpha));
+}
+
+var alpha = 0.0001, lambda = 0;
+// Initialize theta to zero-vector
+var theta = numeric.rep([3, 1], 0);
+
+// X is feature matrix, y is group vector
+var X = [], y = [];
+
+// Gradient function for logistic regression
+var gradient = function(theta) {
+    var H = numeric.dot(X, theta);
+    for (var i = 0; i < H.length; i++) {
+        for (var j = 0; j < H[i].length; j++) {
+            H[i][j] = sigmoid(H[i][j]);
+        }
+    }
+    var regularization = numeric.mul(theta, lambda / X.length);
+    regularization[0][0] = 0.0;
+    var grad = numeric.dot(numeric.transpose(X), numeric.sub(H, y));
+    grad = numeric.div(grad, X.length);
+    return numeric.add(grad, regularization);
+    //return grad;
+};
+
+//
+//X=[[1,1,1],[2,2,2],[3,3,3],[1,1,4],[2,2,5],[3,3,6]];
+//y=[[0],[0],[0],[1],[1],[1]];
+X = [[82.8743,0,59.0779],[56.4458,100,49.81],[51.5163,0,84.3632],[69.1019,100,62.344],[17.6944,0,84.2404],[76.2405,0,69.1622],[16.2657,0,4.1852],[66.615,100,34.4728],[90.5283,0,91.0464],[69.1104,0,51.2347],[33.6112,100,75.0505],[63.2833,0,57.65],[61.5848,0,83.8271],[10.8846,0,29.701],[52.8414,0,82.7956]];
+y = [[0],[0],[1],[1],[0],[1],[1],[0],[1],[1],[1],[1],[1],[0],[1]];
+//
+
+if (X.length) {
+    for (var i = 0; i < 20000; i++) {
+        theta = gradientDescent(theta, gradient, alpha);
+    }
+}
+alert(theta);
+	
+	</script>
+</body>
+</html>
