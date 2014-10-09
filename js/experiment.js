@@ -4,6 +4,10 @@ var objects = []; // actual objects in current scene
 
 var experiment;
 
+var serverlogurl = "http://www.softjobs.eu/experiment2/savelog.php"; //takes the log POST parameter, writes a log file, and returns subject id
+var getcodeurl = "http://www.softjobs.eu/experiment2/getcode.php";
+var subject_id = -1; 
+
 //called after models loaded
 function init() {	
 	setupScene();
@@ -24,7 +28,7 @@ Experiment = function() {
 	data.DISTSCALE = DISTSCALE;
 	
 	var exp_properties = {};
-	exp_properties.expno = 3; //0!!!
+	exp_properties.expno = 0; //0!!!
 	exp_properties.max_expno = 4;
 	
 	var DISTJUDGMENTS = 6;
@@ -35,7 +39,7 @@ Experiment = function() {
 	var fromid, toid; //(for delivery or distance est.)
 	
 	//var taskNumbersPerExperiment = [-1, 30, 24, 24, 24];
-	var taskNumbersPerExperiment = [-1, 2, 24, 15, 24];
+	var taskNumbersPerExperiment = [-1, 2, 2, 2, 2];
 
 	var updateProgress = function() {
 		for (key in exp_properties) {
@@ -56,6 +60,8 @@ Experiment = function() {
 	};
 	
 	this.exp2task = function() {
+		DISTJUDGMENTS = 6;
+		
 		var CONDITIONS = 4;
 		var DISTGROUPCOND = 2, REGCOND = 1, FUNCGROUPCOND=4, COLGROUPCOND=3;
 		
@@ -101,8 +107,9 @@ Experiment = function() {
 	};	
 	
 	this.exp3task = function() {
-		delivery_game = false;
 		DISTJUDGMENTS = 4;
+		
+		delivery_game = false;
 		var RNDTASKS = 5; // first 5 tasks random
 		// generate and store map of experiment 3 (two building clusters and one additional building to determine decision boundary)
 		features = [Math.random()*0.6+0.2, Math.random()*0.6+0.2, Math.random()*0.6+0.2]; //always random
@@ -150,6 +157,8 @@ Experiment = function() {
 	};
 	
 	this.exp4task = function() {
+		DISTJUDGMENTS = 6;
+		
 		var CONDITIONS = 3;
 		var DISTGROUPCOND = 2, REGCOND = 1, COLGROUPCOND=3;
 		
@@ -178,6 +187,7 @@ Experiment = function() {
 		$("#package").removeClass("package_empty");
 		$("#package").addClass("package");
 	};
+	
 	this.exp4judged = function() {
 		// distance judged - ask for next judgment
 		cdistEst++;
@@ -244,7 +254,9 @@ Experiment = function() {
 		}
 		
 		if (!tsp_game) {
-			$("#distance").val(map.getDistance(fromid, toid)); //! //$("#distance").val(""); //!
+			try {
+				$("#distance").attr('title', map.getDistance(fromid, toid)); //! //$("#distance").val(""); //!
+			} catch(e) {}
 			$("#from").text(map.labels[fromid]);
 			$("#to").text(map.labels[toid]);
 			$("#from").show();
@@ -309,12 +321,34 @@ Experiment = function() {
 		else {
 			nextExperiment();
 		}
+		sendLogToServer();
+	};
+	
+	var sendLogToServer = function() {
+		var json_log_data = $.toJSON(data);
+		
+		$.post(serverlogurl, { log: json_log_data, id: subject_id })
+		.done(function(d) {
+		    if (subject_id < 0) 
+		  	    subject_id = d;
+		});
+		
+		if (currentRound > minRounds || debug) {
+			$.post(getcodeurl, { id: subject_id })
+			.done(function(dat) {
+			    if (dat) { 
+			  	    code = dat;
+			  	    $("#surveycode").html("<h1>Survey code: <br/><u style='border:1px solid green'>"+code+"</u></h2>");
+		  	    	$("*").enableSelection();
+		  	    	swalert("Finished experiment!", "Thank you for your participation!\nHere is your survey code: "+code, "success");
+		  	   }
+			});
+		}
 	};
 	
 	var nextExperiment = function() {
 		if (exp_properties.expno >= exp_properties.max_expno) {
-			// TODO - transmit data, show code
-			swalert("Finished experiment!", "Here is your code:", "success");
+			sendLogToServer();
 		}
 		else {
 			//show next instructions
@@ -556,7 +590,7 @@ Experiment = function() {
 		map.update();
 	};
 	this.timerLoop = function() {
-		if (exp_properties.expno == 3 && this.delivered >= objects.length) {
+		if (exp_properties.expno == 4 && this.delivered >= objects.length) {
 			var mind = Infinity, minid = -1;
 			for (var i = 0; i < objects.length; i++) {
 				var d = getPointToEdgeDistance(controls.getObject(), objects[i]);
@@ -565,7 +599,7 @@ Experiment = function() {
 					minid = i;
 				}
 			}
-			if (mind < BUILDINGWIDTH && minid == data["exp"+exp_properties.expno]["task"+exp_properties.taskno].startbuilding) {
+			if (mind < BUILDINGWIDTH && data["exp"+exp_properties.expno]["task"+exp_properties.taskno].startbuilding && minid == data["exp"+exp_properties.expno]["task"+exp_properties.taskno].startbuilding) {
 				$(".pressenter").css('color', '#00ff00');
 				delivered_to = minid;
 			}

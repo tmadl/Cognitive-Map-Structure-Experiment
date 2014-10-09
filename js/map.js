@@ -432,6 +432,7 @@ function getDistance(x1, z1, x2, z2) {
 }
 
 function getEdgeDistance(o1, o2) { // in m
+	if (!o1 || !o2) return null;
 	var x1 = o1.position.x, x2 = o2.position.x, z1 = o1.position.z, z2 = o2.position.z;
 	var l = buildingwidthpx / 2;
 	var v1 = [new THREE.Vector2(x1 + l, z1 + l), new THREE.Vector2(x1 + l, z1 - l), new THREE.Vector2(x1 - l, z1 + l), new THREE.Vector2(x1 - l, z1 - l)];

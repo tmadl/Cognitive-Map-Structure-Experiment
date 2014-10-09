@@ -346,7 +346,7 @@ $(document).on("keydown", function (e) {
 			$("#distance").val(v.substring(0, v.length-1));
 		}
 	}
-	else if (e.which >= '0'.charCodeAt(0) && e.which <= '9'.charCodeAt(0)) {
+	else if (e.which >= '0'.charCodeAt(0) && e.which <= '9'.charCodeAt(0)  && !$(e.target).is("input, textarea")) {
 		//if (controls.enabled) 
 		{ // pointer is locked; help enter distance judgment
 			$("#distance").val(v+String.fromCharCode(e.which));
