@@ -6,7 +6,7 @@
   <script src="jquery-ui.min.js"></script>
   <script src="sweet-alert.min.js"></script>
   
-  <script src="numeric-1.2.6.min.js"></script>
+  <!--<script src="numeric-1.2.6.min.js"></script>-->
   
   <script src="three.min.js"></script>
   <script src="stats.min.js"></script>
@@ -73,7 +73,13 @@
 					
 						<span id="to">Building 2</span>
 						
-					<span class="estimate_task">:<br/><input id="distance" size="12"/> meters.</span>	<span class="deliver_task hidden">, memorize<br/>the map and then <span id="pressenter">press Enter</span></span>
+					<span class="estimate_task">:<br/><input id="distance" size="12"/> meters.</span>	<span class="deliver_task hidden">, memorize<br/>the map and then <span class="pressenter">press Enter</span></span>
+					
+					<span class="tsp_task hidden">
+						Deliver packages to all buildings, and then return to where you started
+						(Building <span class="startbuilding"></span>), 
+						using the <b>shortest possible route</b>. Memorize the map and <span class="pressenter">press Enter</span> when done.
+					</span>
 				</span>
 			</p>
 			<p align="justify">
@@ -94,9 +100,19 @@
 					Please also memorize the positions of buildings.<br/>
 					<!--Once you have delivered a package and memorized the positions, press enter.--> 
 				</div>
-				<div id="instructions_exp3" class="hidden itxt">exp3
+				<div id="instructions_exp3" class="hidden itxt">
+					Please deliver at least one package:
+					<ul>
+						<li>Find the <b>Supplier</b> building and press E to pick up a package</li>
+						<li>Find the <b>Customer</b> building and press E to deliver a package</li>
+						<li>Find the <b>Gas station</b> (if there is one) to fill up your car</li>
+					</ul>
+					Please also memorize the positions of buildings.<br/>
 				</div>
-				<div id="instructions_exp4" class="hidden itxt">exp4
+				<div id="instructions_exp4" class="hidden itxt">
+					Please visit all customers and deliver packages to them, <b>using the shortest path possible</b>, and then return to where you started (Building <span class="startbuilding"></span>).
+					<br/><br/>
+					Only visit each building once (except for the starting building).
 				</div>
 			</p>
 			

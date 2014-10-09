@@ -334,6 +334,10 @@ function lockPointer() {
 }
 
 $(document).on("keydown", function (e) {
+	if (sw) {
+		$(".confirm").click();
+	}
+	
 	v=$("#distance").val();
 	if (e.which === 8 && !$(e.target).is("input, textarea")) {
     	e.preventDefault();
@@ -348,12 +352,18 @@ $(document).on("keydown", function (e) {
 			$("#distance").val(v+String.fromCharCode(e.which));
 		}
 	}
-	else if (e.which == 13) {
+	else if (e.which == 13 && !sw) {
+		e.preventDefault();
+		event.stopPropagation();
 		experiment.onEnter();
 	}
 	else if (e.which == 69) {
+		e.preventDefault();
+		event.stopPropagation();
 		experiment.onUse();
-	}
+	}	
+	
+	sw = false;
 });
 
 
@@ -361,6 +371,11 @@ $(document).ready(function() {
 	$("#starter").hide();
 	loadHouses();
 });
+
+var sw = false;
+function swalert(str1, str2) {
+	setTimeout(function() {sw = true;swal(str1, str2?str2:"");}, 100);
+}
 
 /*
 

@@ -18,14 +18,14 @@ Experiment = function() {
 	var coords; // current building coordinates
 	var fuel = 100, cash = 100, has_package_from = null, delivered_to = null;
 	var MINCASHINCR = 10, MAXCASHINCR = 50;
-	var delivery_game = false;
+	var delivery_game = false, tsp_game = false;
 	
 	var data = {};
 	data.DISTSCALE = DISTSCALE;
 	
 	var exp_properties = {};
-	exp_properties.expno = 2; //0!!!
-	exp_properties.max_expno = 3;
+	exp_properties.expno = 3; //0!!!
+	exp_properties.max_expno = 4;
 	
 	var DISTJUDGMENTS = 6;
 	var distanceEstimation = [-1, -1, -1, -1]; //distance, from, to, type
@@ -35,7 +35,7 @@ Experiment = function() {
 	var fromid, toid; //(for delivery or distance est.)
 	
 	//var taskNumbersPerExperiment = [-1, 30, 24, 24, 24];
-	var taskNumbersPerExperiment = [-1, 2, 24, 24, 24];
+	var taskNumbersPerExperiment = [-1, 2, 24, 15, 24];
 
 	var updateProgress = function() {
 		for (key in exp_properties) {
@@ -103,19 +103,31 @@ Experiment = function() {
 	this.exp3task = function() {
 		delivery_game = false;
 		DISTJUDGMENTS = 4;
+		var RNDTASKS = 5; // first 5 tasks random
 		// generate and store map of experiment 3 (two building clusters and one additional building to determine decision boundary)
+		features = [Math.random()*0.6+0.2, Math.random()*0.6+0.2, Math.random()*0.6+0.2]; //always random
+		/*
 		// additional building: random for the first 3 trials, then use active learning
-		if (exp_properties.taskno <= 3) {
+		if (exp_properties.taskno <= RNDTASKS) {
 			features = [Math.random()*0.6+0.2, Math.random()*0.6+0.2, Math.random()*0.6+0.2];
 		}
 		else {
 			var data = [];
 			var labels = [];
-			for (var i=0; i<=cdistEst; i++) {
-				var d = data["exp"+exp_properties.expno]["task"+exp_properties.taskno].distance_estimations[i];
-				var rd = data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_distances[i];
+			for (var j=0; j<exp_properties.taskno; j++) {
+				var biases = getDBBiases(j);
+				var sum = numeric.sum(biases);
+				if (sum == 0 || sum == 4 || biases[0]+biases[1] == biases[2]+biases[3]) { //undecidable cases. oo|oo uu|uu ou|uo 
+				}
+				else {
+					var label = biases[0]+biases[1] < biases[2]+biases[3] ? 0 : 1;
+					labels.push(label);
+					data.push(data["exp"+exp_properties.expno]["task"+j].dbfeatures);
+				}
 			}
-		}
+			features = [0,0,0];
+		}*/
+		data["exp"+exp_properties.expno]["task"+exp_properties.taskno].dbfeatures = features;
 		// generate map
 		map.decisionboundaryMap();
 		delivery_game = true;
@@ -137,28 +149,91 @@ Experiment = function() {
 		}
 	};
 	
+	this.exp4task = function() {
+		var CONDITIONS = 3;
+		var DISTGROUPCOND = 2, REGCOND = 1, COLGROUPCOND=3;
+		
+		var ct = permuted_taskno[exp_properties.taskno-1]; //current task number, randomly permuted
+		var condition = ct % CONDITIONS + 1; //cycle through conditions
+		
+		var buildings = 6;
+		
+		// generate and store maps of experiment 2
+		var groups = 2 + Math.round(Math.random()); // 2 or 3 groups
+		if (condition == DISTGROUPCOND) {
+			map.groupedMap(groups, 0, 0, buildings);
+		}
+		else if (condition == REGCOND) { // regular, no sp. clusters
+			map.regularTspMap(0, buildings);
+		}
+		else { // equidistant, group by color
+			//cluster by color [c3]
+			map.regularTspMap(groups, buildings);
+		}
+		
+		delivery_game = false;
+		tsp_game = true;
+		this.delivered = 0;
+		delivered_to = -1;
+		$("#package").removeClass("package_empty");
+		$("#package").addClass("package");
+	};
+	this.exp4judged = function() {
+		// distance judged - ask for next judgment
+		cdistEst++;
+		if (cdistEst < DISTJUDGMENTS) {
+			updateTaskInstruction();
+		}
+		else {
+			//showMapOverlay();
+			$("#blocker").css('background-color', 'rgba(0,0,0,0.5)');
+			this.blocked = false;
+			flashCongrats();	
+
+			nextTask();
+		}
+	};	
+	
+	var getDBBiases = function(taskno) {
+		var expno = 3; // DB estimated in exp 3
+		var biases_by_map = [[], []];
+		for (var i=0; i<=data["exp"+expno]["task"+taskno].real_distances[i].length; i++) {
+			var type = data["exp"+expno]["task"+taskno].distance_estimations[i][3]; //submap 0 or 1
+			var d = data["exp"+expno]["task"+taskno].distance_estimations[i][0];
+			var rd = data["exp"+expno]["task"+taskno].real_distances[i];
+			var bias = d < rd ? 0 : 1;
+			biases_by_map[type].push(bias);
+		}
+		return biases_by_map[0].concat(biases_by_map[1]);
+	};
+	
 	
 	var flashCongrats = function() {
-		swal("Good job!", "You finished task "+exp_properties.taskno+" of experiment "+exp_properties.expno+"!", "success");
+		swalert("Good job!", "You finished task "+exp_properties.taskno+" of experiment "+exp_properties.expno+"!", "success");
 		//$("#instructions_center").hide();$("#blocker").show();$("#congrats").show();
 		//setTimeout('$("#instructions_center").show();$("#blocker").hide();$("#congrats").hide();lockPointer();', 2000);
 	};
 	
 	var updateTaskInstruction = function() {
+		$(".deliver_task").hide();
+		$(".estimate_task").hide();
+		$(".tsp_task").hide();
+		
 		if (delivery_game) {
 			$(".deliver_task").show();
-			$(".estimate_task").hide();
 			
 			pair = getBuildingPairForDelivery();
 			fromid = pair[0];
 			toid = pair[1];
+		}
+		else if (tsp_game) {
+			$(".tsp_task").show();
 		}
 		else {
 			var fixed_fromid = null;
 			if (exp_properties.expno == 3) 
 				fixed_fromid = objects.length-1; //in exp 3, always ask distance to middle (dec.boundary) building
 			
-			$(".deliver_task").hide();
 			$(".estimate_task").show();
 			pair = getBuildingPairForDistanceEstimation(fixed_fromid);
 			
@@ -168,9 +243,19 @@ Experiment = function() {
 			distanceEstimation = [-1, fromid, toid, distEstTypes[cdistEst]]; //distance, from, to, type	
 		}
 		
-		$("#distance").val("");
-		$("#from").text(map.labels[fromid]);
-		$("#to").text(map.labels[toid]);
+		if (!tsp_game) {
+			$("#distance").val(map.getDistance(fromid, toid)); //! //$("#distance").val(""); //!
+			$("#from").text(map.labels[fromid]);
+			$("#to").text(map.labels[toid]);
+			$("#from").show();
+			$("#to").show();
+		}
+		else {
+			$("#from").hide();
+			$("#to").hide();
+			$(".startbuilding").text(data["exp"+exp_properties.expno]["task"+exp_properties.taskno].startbuilding+1);
+		}
+		
 		$("#current_task").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
 	};
 	
@@ -200,6 +285,7 @@ Experiment = function() {
 			// reset camera to somewhere near the existing buildings (but not within them)
 			var i = Math.floor(Math.random()*objects.length);
 			while (!objects[i]) i = Math.floor(Math.random()*objects.length);
+			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].startbuilding = i;
 			controls.getObject().position.x = objects[i].position.x + buildingwidthpx*1.5;
 			controls.getObject().position.z = objects[i].position.z + buildingwidthpx*1.5;
 			controls.getObject().rotation.y = 0.8;
@@ -228,7 +314,7 @@ Experiment = function() {
 	var nextExperiment = function() {
 		if (exp_properties.expno >= exp_properties.max_expno) {
 			// TODO - transmit data, show code
-			swal("Finished experiment!", "Here is your code:", "success");
+			swalert("Finished experiment!", "Here is your code:", "success");
 		}
 		else {
 			//show next instructions
@@ -300,6 +386,26 @@ Experiment = function() {
 		return [fromid, toid];
 	};
 	
+	var getBuildingPairForDBEstimation = function(fixed_fromid) {
+		var fromid = fixed_fromid, toid = -1;
+		
+		// for decision boundary estimation - always ask from same building (on db) 
+		
+		var j = 0, maxtries = 1000;
+		var ids = map.getIdsByCluster(0);
+		var ids2 = map.getIdsByCluster(1);
+		do {
+			if (distEstTypes[cdistEst] == 0) { // draw 2 within cluster
+				toid = drawRandom(ids, 1)[0];
+			}
+			else if (distEstTypes[cdistEst] == 1) { // draw across cluster
+				toid = drawRandom(ids2, 1)[0];
+			}
+		} while ((containsVector(distEstAsked, [fromid, toid]) || containsVector(distEstAsked, [toid, fromid])) && j++ < maxtries);
+				
+		return [fromid, toid];
+	};
+	
 	
 	this.run = function() {
 		this.timerLoop();
@@ -308,6 +414,9 @@ Experiment = function() {
 	
 	this.getData = function() {
 		return data;
+	};
+	this.getProperties = function() {
+		return exp_properties;
 	};
 	this.getMap = function() {
 		return map;
@@ -318,7 +427,7 @@ Experiment = function() {
 		if (mapcanvasshown) {
 			//record drawn map
 			if (!mapcanvasclicked) {
-				swal("You made no changes to the map. Please create a map of where you remember the buildings by dragging them into their correct place with your mouse.");
+				swalert("You made no changes to the map. Please create a map of where you remember the buildings by dragging them into their correct place with your mouse.");
 			}
 			else {
 				rememberedbuildingx = [];
@@ -350,12 +459,17 @@ Experiment = function() {
 				nextTask();
 			}
 		}
-		else if (delivery_game) {
-			if (has_package_from != fromid || delivered_to != toid) {
-				swal("Please pick up a package from "+map.labels[fromid]+" and deliver it to "+map.labels[toid]+"! Press enter when finished.");
+		else if (delivery_game || tsp_game) {
+			if (delivery_game && (has_package_from != fromid || delivered_to != toid)) {
+				swalert("Please pick up a package from "+map.labels[fromid]+" and deliver it to "+map.labels[toid]+"! Press enter when finished.");
+			}
+			else if (tsp_game && (this.delivered < objects.length || delivered_to < 0)) {
+				swalert("Please deliver packages to all buildings, and then return to Building "+(data["exp"+exp_properties.expno]["task"+exp_properties.taskno].startbuilding+1)+"! Press enter when finished.");
 			}
 			else {
-				$("#pressenter").css('color', '#ddeeff');
+				if (tsp_game) tsp_game = false;
+				
+				$(".pressenter").css('color', '#ddeeff');
 				has_package_from = null;
 				delivered_to = null;
 				delivery_game = false;
@@ -373,11 +487,11 @@ Experiment = function() {
 			//record distance estimate
 			est = parseInt($("#distance").val());
 			if (isNaN(est)) {
-				swal("Please enter an estimated distance!\n(Make sure it is a valid number)");
+				swalert("Please enter an estimated distance!\n(Make sure it is a valid number)");
 			}
 			else {
 				// get real distance
-				var reald = map.getDistance(distanceEstimation.from, distanceEstimation.to);
+				var reald = map.getDistance(distanceEstimation[1], distanceEstimation[2]);
 				// store estimated and real distance
 				distanceEstimation[0] = est;
 				data["exp"+exp_properties.expno]["task"+exp_properties.taskno].distance_estimations.push(distanceEstimation);
@@ -417,7 +531,15 @@ Experiment = function() {
 				$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
 				cash += Math.round(Math.random()*(MAXCASHINCR-MINCASHINCR)) + MINCASHINCR;
 				
-				if (has_package_from == fromid && delivered_to == toid) $("#pressenter").css('color', '#00ff00');
+				if (has_package_from == fromid && delivered_to == toid) $(".pressenter").css('color', '#00ff00');
+			}
+			else if (tsp_game) {
+				// tsp - deliver package
+				$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
+				cash += MINCASHINCR;
+				objects[minid].children[1].material.color.setHex(0x000000);
+				objects[minid].children[2].material.color.setHex(0x000000);
+				this.delivered++;
 			}
 		}
 	};
@@ -426,7 +548,7 @@ Experiment = function() {
 		if (exp_properties.expno == 1 && exp_properties.taskno <= 5) { //exp1 first 5 tasks - show correct distance to user
 			delta = Math.abs(est - reald);
 			overunder = est > reald ? "over": "under";
-			swal("The correct distance was "+reald, "You "+overunder+"estimated by "+delta+"\n\n(This information will only be shown "+(5 - exp_properties.taskno)+" more times)");
+			swalert("The correct distance was "+reald, "You "+overunder+"estimated by "+delta+"\n\n(This information will only be shown "+(5 - exp_properties.taskno)+" more times)");
 		}
 	};
 	
@@ -434,6 +556,21 @@ Experiment = function() {
 		map.update();
 	};
 	this.timerLoop = function() {
+		if (exp_properties.expno == 3 && this.delivered >= objects.length) {
+			var mind = Infinity, minid = -1;
+			for (var i = 0; i < objects.length; i++) {
+				var d = getPointToEdgeDistance(controls.getObject(), objects[i]);
+				if (d < mind) {
+					mind = d;
+					minid = i;
+				}
+			}
+			if (mind < BUILDINGWIDTH && minid == data["exp"+exp_properties.expno]["task"+exp_properties.taskno].startbuilding) {
+				$(".pressenter").css('color', '#00ff00');
+				delivered_to = minid;
+			}
+		}
+		
 		if (exp_properties.expno > 1) {
 			//use up fuel in exp 2 and 3
 			if (controls.moving)

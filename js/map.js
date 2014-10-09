@@ -43,7 +43,7 @@ Map = function() {
 	};
 	
 	this.getDistance = function(fromId, toId) {
-		return Math.round(getEdgeDistance(objects[0], objects[1]));
+		return Math.round(getEdgeDistance(objects[fromId], objects[toId]));
 	};
 	
 	this.randomMap = function(n) {
@@ -136,8 +136,8 @@ Map = function() {
 		return [this.building_coords, this.cluster_assignments];
 	};
 
-	this.groupedMap = function(groups, by_function, by_colors) {
-		var BUILDINGS = 5;
+	this.groupedMap = function(groups, by_function, by_colors, buildings) {
+		var BUILDINGS = buildings ? buildings : 5;
 		
 		this.clusters = groups;
 		this.building_coords = [];
@@ -266,6 +266,68 @@ Map = function() {
 		
 		return [this.building_coords, this.cluster_assignments];
 	};
+	
+	
+	var tspeqclusters2 = [[1,1,0,1,1,0,0,0,0], [0,0,0,1,1,0,1,1,0], [0,1,1,0,1,1,0,0,0], [0,0,0,0,1,1,0,1,1]];
+	var tspeqclusters3 = [[1,1,2,1,1,2,0,0,2], [2,2,2,1,1,0,1,1,0], [0,1,1,0,1,1,2,2,2], [2,0,0,2,1,1,2,1,1]];
+	var tspeqclusters;
+	this.regularTspMap = function(groups, buildings) {
+		//
+		var equidistant = false; // equidistant, or added position noise
+		
+		var gridsize = 3;
+		tspeqclusters = groups == 2 ? tspeqclusters2 : tspeqclusters3; 
+		
+		var rect = Math.round(Math.random()); // rectangular or triangular
+		
+		this.clusters = groups;
+		this.building_coords = [];
+		this.cluster_assignments = [];
+		this.group_colors = rndColors(groups);
+		
+		//var fid = shuffle(function_names.length);
+		//dont permute - first two must be customer and supplier (or other way round)
+		var fnames = function_names.slice(); 
+		if (Math.round(Math.random())) {
+			fnames[0] = function_names[1];
+			fnames[1] = function_names[0];
+		}
+		
+		var d = MINDIST*2 + Math.random()*DEFAULTDIST;
+		
+		var rndi = Math.floor(Math.random()*tspeqclusters.length);
+		
+		//alert((groups == 2 ? "tspeqclusters2" : "tspeqclusters3") + "\n" + rndi + "\n" + tspeqclusters[rndi]);
+		
+		var clid_vec = groups ? tspeqclusters[rndi] : [0,0,0,0,0,0];
+		var oc = clid_vec;
+		var colors = [], functions = [];
+		
+		function_numbers = [0,0,0];
+		
+		var j = 0;
+		for (var i=0; i<buildings; i++) {
+			var xi = Math.floor(i/gridsize), yi = (i%gridsize);
+			if (rect)
+				var hx = xi * d, hy = yi * d; // rectangular
+			else
+				var hx = xi * d + (yi%2)*d/2, hy = yi * d * Math.sqrt(3)/2; // triangular grid
+			var clid = clid_vec[i];
+			var c = this.group_colors[clid];
+			
+			if (!equidistant) {
+				hx += Math.random()*d/2 - d/4;
+				hy += Math.random()*d/2 - d/4;
+			}
+
+			this.building_coords.push([hx, hy]);
+			this.cluster_assignments.push(clid);
+			colors.push(c);
+		}
+		this.renderMap(this.building_coords, colors, functions);
+		
+		return [this.building_coords, this.cluster_assignments];
+	};
 
 	this.renderMap = function(coords, colors, functions) {
 		for (var i = 0; i < coords.length; i++) {
@@ -289,7 +351,7 @@ Map = function() {
 			var col = colors && colors[i] ? intToCol(colors[i]) : "#ffffff";
 			html += "<div class='dot' style='left:"+c[0]+"px;top:"+c[1]+"px;height:"+c[2]+"px;width:"+c[3]+"px;background:"+col+"' title='"+this.labels[i]+"'></div>";
 			try {
-				html += "<div class='dotlabel' style='left:"+(c[0]+3)+"px;top:"+c[1]+"px;color:"+col+"' title='"+this.labels[i]+"'>"+this.labels[i].charAt(0)+(i+1)+"</div>";
+				html += "<div class='dotlabel' style='left:"+(c[0]+3)+"px;top:"+c[1]+"px;color:"+col+"' title='"+this.labels[i]+"'>"+this.labels[i].charAt(0)+this.labels[i].charAt(this.labels[i].length-1)+"</div>";
 			}
 			catch (e) {
 				alert(e);
