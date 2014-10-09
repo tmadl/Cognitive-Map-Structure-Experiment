@@ -4,8 +4,8 @@ var objects = []; // actual objects in current scene
 
 var experiment;
 
-var serverlogurl = "http://www.softjobs.eu/experiment2/savelog.php"; //takes the log POST parameter, writes a log file, and returns subject id
-var getcodeurl = "http://www.softjobs.eu/experiment2/getcode.php";
+var serverlogurl = "http://madlnet.net/tsworks/savelog.php"; //takes the log POST parameter, writes a log file, and returns subject id
+var getcodeurl = "http://madlnet.net/tsworks/getcode.php";
 var subject_id = -1; 
 
 //called after models loaded
@@ -39,7 +39,7 @@ Experiment = function() {
 	var fromid, toid; //(for delivery or distance est.)
 	
 	//var taskNumbersPerExperiment = [-1, 30, 24, 24, 24];
-	var taskNumbersPerExperiment = [-1, 2, 2, 2, 2];
+	var taskNumbersPerExperiment = [-1, 30, 24, 24, 12];
 
 	var updateProgress = function() {
 		for (key in exp_properties) {
@@ -333,7 +333,7 @@ Experiment = function() {
 		  	    subject_id = d;
 		});
 		
-		if (currentRound > minRounds || debug) {
+		if (exp_properties.expno >= exp_properties.max_expno) {
 			$.post(getcodeurl, { id: subject_id })
 			.done(function(dat) {
 			    if (dat) { 
