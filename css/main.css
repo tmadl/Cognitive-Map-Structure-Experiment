@@ -62,7 +62,7 @@ body {
 }
 
 #statusbar {
-	width: 600px;
+	width: 200px;
 	background-color: rgba(0, 0, 0, 0.4);
 	position:absolute;
 	top: 0px;
@@ -78,6 +78,7 @@ body {
 	width: 50px;
 	float: left;
 }
+/*
 .tank {
 	width: 410px;
 	height: 50px;
@@ -97,6 +98,7 @@ body {
 	height: 17px;
 	background: #0ff000;
 }
+*/
 #cashamount {
 	color: #00ff00;
 	font-size: 20px;

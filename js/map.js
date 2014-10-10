@@ -1,5 +1,5 @@
 var DEFAULTDIST = 250;
-var MAXGROUPSIZE = 400, MINGROUPSIZE = 200, MINGROUPDIST = 300;
+var MAXGROUPSIZE = 500, MINGROUPSIZE = 300, MINGROUPDIST = 300;
 
 var function_names = ["Customer", "Supplier", "Gas Station"];
 
@@ -127,11 +127,11 @@ Map = function() {
 		functions.push(fun);
 		
 		this.renderMap(this.building_coords, colors, functions);
-		/*
+		//
 		for (var i=0; i<groups; i++) {
 			this.renderClusterInMinimap([mu[i][0], mu[i][1], sigma[i][0], sigma[i][1]]);
 		}
-		*/
+		//
 		
 		return [this.building_coords, this.cluster_assignments];
 	};
@@ -188,11 +188,11 @@ Map = function() {
 		}
 		this.renderMap(this.building_coords, colors, functions);
 		
-		/*
+		//
 		for (var i=0; i<groups; i++) {
 			this.renderClusterInMinimap([mu[i][0], mu[i][1], sigma[i][0], sigma[i][1]]);
 		}
-		*/
+		//
 		
 		return [this.building_coords, this.cluster_assignments];
 	};
@@ -207,7 +207,8 @@ Map = function() {
 		var gridsize = 3;
 		eqclusters = groups == 2 ? eqclusters2 : eqclusters3; 
 		
-		var BUILDINGS = 4 + Math.round(Math.random()); // buildings: 4 || 5
+		//var BUILDINGS = 4 + Math.round(Math.random()); // buildings: 4 || 5
+		var BUILDINGS = 5;
 		var rect = Math.round(Math.random()); // rectangular or triangular
 		
 		this.clusters = groups;
@@ -340,10 +341,10 @@ Map = function() {
 				addHouse(f, coords[i][0], coords[i][1]);				
 			}
 		}
-		//this.renderMinimap(coords, colors);
+		this.renderMinimap(coords, colors);
 		return coords;
 	};
-	/*
+	
 	this.renderMinimap = function(coords, colors) {
 		var html = "";
 		for (var i = 0; i < objects.length; i++) {
@@ -360,6 +361,8 @@ Map = function() {
 		var c = minimapCoords([controls.getObject().position.x, controls.getObject().position.z]);
 		html += "<div id='me' class='dot' style='left:"+c[0]+"px;top:"+c[1]+"px;border:1px solid red;'></div>";
 		$("#minimap").html(html);
+		
+		$("#minimap").hide();
 	};
 	this.renderClusterInMinimap = function(c) {
 		for (var i=0; i<c.length; i++) c[i]/=DISTSCALE;
@@ -368,7 +371,7 @@ Map = function() {
 		c = minimapCoords(c);
 		$("#minimap").html($("#minimap").html()+"<div class='dot gauss' style='left:"+c[0]+"px;top:"+c[1]+"px;height:"+c[2]+"px;width:"+c[3]+"px;background-color: rgba(0, 255, 255, 0.15);-webkit-border-radius: 1000px; -moz-border-radius: 1000px; border-radius: 1000px;'></div>");
 	};
-	*/
+	
 	this.update = function() {
 		if ($("#me")) {
 			var c = minimapCoords([controls.getObject().position.x, controls.getObject().position.z]);

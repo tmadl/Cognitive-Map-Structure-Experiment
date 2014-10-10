@@ -20,7 +20,7 @@ function init() {
 Experiment = function() {	
 	var map = new Map();
 	var coords; // current building coordinates
-	var fuel = 100, cash = 100, has_package_from = null, delivered_to = null;
+	var fuel = 100, cash = 0, has_package_from = null, delivered_to = null;
 	var MINCASHINCR = 10, MAXCASHINCR = 50;
 	var delivery_game = false, tsp_game = false, memorize_task = false;
 	
@@ -28,18 +28,18 @@ Experiment = function() {
 	data.DISTSCALE = DISTSCALE;
 	
 	var exp_properties = {};
-	exp_properties.expno = 1; //0!!!
+	exp_properties.expno = 3; //0!!!
 	exp_properties.max_expno = 4;
 	
 	var DISTJUDGMENTS = 6;
-	var distanceEstimation = [-1, -1, -1, -1]; //distance, from, to, type
+	var distanceEstimation = [-1, -1, -1, -1]; //distance, from, to, type - 0 within, 1 across
 	var distEstTypes = []; // within-cluster or across-cluster
 	var distEstAsked = []; // already asked 
 	var cdistEst = -1;
 	var fromid, toid; //(for delivery or distance est.)
 	
-	//var taskNumbersPerExperiment = [-1, 50, 24, 24, 12];
-	var taskNumbersPerExperiment = [-1, 15, 12, 12, 6];
+	var taskNumbersPerExperiment = [-1, 40, 24, 24, 12];
+	//var taskNumbersPerExperiment = [-1, 15, 12, 12, 6];
 	
 	var SHOWDISTTASKS = 5; //show distance for first 5 tasks
 
@@ -73,7 +73,8 @@ Experiment = function() {
 		condition = ct % CONDITIONS + 1; //cycle through conditions
 		
 		// generate and store maps of experiment 2
-		var groups = 2 + Math.round(Math.random()); // 2 or 3 groups
+		//var groups = 2 + Math.round(Math.random()); // 2 or 3 groups
+		var groups = 2;
 		if (condition == DISTGROUPCOND) {
 			map.groupedMap(groups);
 		}
@@ -81,7 +82,7 @@ Experiment = function() {
 			map.regularMap();
 		}
 		else { // equidistant, group by function or color
-			if (fuel < 20 && condition==FUNCGROUPCOND) groups = 3; // ensure there is a petrol station when fuel is low
+			//if (fuel < 20 && condition==FUNCGROUPCOND) groups = 3; // ensure there is a petrol station when fuel is low
 			//cluster by color [c3] or function [c4] 
 			map.regularMap(groups, condition==FUNCGROUPCOND);
 		}
@@ -174,7 +175,7 @@ Experiment = function() {
 		var buildings = 6;
 		
 		// generate and store maps of experiment 2
-		var groups = 2 + Math.round(Math.random()); // 2 or 3 groups
+		var groups = 2; 
 		if (condition == DISTGROUPCOND) {
 			map.groupedMap(groups, 0, 0, buildings);
 		}
@@ -238,7 +239,7 @@ Experiment = function() {
 		
 		if (delivery_game) {
 			$(".deliver_task").show();
-			$("#instructions_exp2b").show();
+			$("#instructions_exp3").show();
 			
 			pair = getBuildingPairForDelivery();
 			fromid = pair[0];
@@ -279,6 +280,7 @@ Experiment = function() {
 			try {
 				//$("#distance").attr('title', map.getDistance(fromid, toid)); //! //$("#distance").val(""); //!
 			} catch(e) {}
+			$("#distance").val('');
 			$("#from").text(map.labels[fromid]);
 			$("#to").text(map.labels[toid]);
 			$("#from").show();
@@ -375,6 +377,8 @@ Experiment = function() {
 		else {
 			//show next instructions
 			$("#instructions_exp"+exp_properties.expno).hide();
+			$("#instructions_exp"+exp_properties.expno+"a").hide();
+			$("#instructions_exp"+exp_properties.expno+"b").hide();
 			exp_properties.expno++;
 			$("#instructions_exp"+exp_properties.expno).show();
 			exp_properties.taskno = 0;
@@ -415,7 +419,7 @@ Experiment = function() {
 			} while (containsVector(distEstAsked, [fromid, toid]));
 		}
 		else {
-			var j = 0, maxtries = 1000;
+			var j = 0, maxtries = 10000;
 			do {
 				var cluster, ids;
 				do {
@@ -437,6 +441,7 @@ Experiment = function() {
 					toid = drawRandom(ids2, 1)[0];
 				}
 			} while ((containsVector(distEstAsked, [fromid, toid]) || containsVector(distEstAsked, [toid, fromid])) && j++ < maxtries);
+			document.title = "maxtries";
 		}
 				
 		return [fromid, toid];
@@ -648,7 +653,7 @@ Experiment = function() {
 			}
 		}
 		
-		if (exp_properties.expno > 1) {
+		/*if (exp_properties.expno > 1) {
 			//use up fuel in exp 2 and 3
 			if (controls.moving)
 				fuel-=0.5;
@@ -668,9 +673,10 @@ Experiment = function() {
 			var r = Math.round(255 * (1 - fuel/100)), g = 256*Math.round(255 * (fuel/100));
 			$("#fuellevel").css({background: intToCol(r)+intToCol(g).substring(1)+"00"});
 			$("#cashamount").text(cash + " $");
-		}
+		}*/
+		$("#cashamount").text(cash + " $");
 		var me = this;
-		setTimeout(function() {me.timerLoop()}, 1000);
+		setTimeout(function() {me.timerLoop()}, 500);
 	};
 };
 
