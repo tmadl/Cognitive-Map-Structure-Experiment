@@ -28,7 +28,7 @@ Experiment = function() {
 	data.DISTSCALE = DISTSCALE;
 	
 	var exp_properties = {};
-	exp_properties.expno = 3; //0!!!
+	exp_properties.expno = 0; //0!!!
 	exp_properties.max_expno = 4;
 	
 	var DISTJUDGMENTS = 6;
@@ -38,7 +38,7 @@ Experiment = function() {
 	var cdistEst = -1;
 	var fromid, toid; //(for delivery or distance est.)
 	
-	var taskNumbersPerExperiment = [-1, 40, 24, 24, 12];
+	var taskNumbersPerExperiment = [-1, 40, 24, 32, 24];
 	//var taskNumbersPerExperiment = [-1, 15, 12, 12, 6];
 	
 	var SHOWDISTTASKS = 5; //show distance for first 5 tasks
@@ -48,6 +48,8 @@ Experiment = function() {
 			$("."+key).text(exp_properties[key]);
 		}
 		$("#distance").val("");
+		$(".expno").text(exp_properties.expno>1?2:1);
+		$(".max_expno").text(2);
 	};
 	
 	var itext = null;
@@ -226,7 +228,7 @@ Experiment = function() {
 	
 	
 	var flashCongrats = function() {
-		swalert("Good job!", "You finished task "+exp_properties.taskno+" of experiment "+exp_properties.expno+"!", "success");
+		swalert("Good job!", "You finished task "+exp_properties.taskno+"!", "success");
 		//$("#instructions_center").hide();$("#blocker").show();$("#congrats").show();
 		//setTimeout('$("#instructions_center").show();$("#blocker").hide();$("#congrats").hide();lockPointer();', 2000);
 	};
@@ -343,7 +345,32 @@ Experiment = function() {
 			updateTaskInstruction();
 		}
 		else {
-			nextExperiment();
+			//nextExperiment();
+			$("#instructions_exp"+exp_properties.expno).hide();
+			$("#instructions_exp"+exp_properties.expno+"a").hide();
+			$("#instructions_exp"+exp_properties.expno+"b").hide();
+			
+			if (exp_properties.expno == 1) { // still on exp 1
+				//show next instructions
+
+				//exp_properties.expno++;
+				exp_properties.expno = (subject_id % 3) + 2; //  [2 || 3 || 4]
+				
+				$("#instructions_exp"+exp_properties.expno).show();
+				exp_properties.taskno = 0;
+				exp_properties.max_taskno = taskNumbersPerExperiment[exp_properties.expno];
+				
+				// initialize experiment data
+				data["exp"+exp_properties.expno] = {};
+				
+				//permute task numbers randomly
+				var tasks = new Array(taskNumbersPerExperiment[exp_properties.expno]);
+				for (var i=1; i<=taskNumbersPerExperiment[exp_properties.expno]; i++)
+					tasks[i-1]=i;
+				this.permuted_taskno = shuffle(tasks);
+				
+				nextTask();
+			}
 		}
 		sendLogToServer();
 	};
@@ -357,13 +384,13 @@ Experiment = function() {
 		  	    subject_id = d;
 		});
 		
-		if (exp_properties.expno >= exp_properties.max_expno) {
+		if (exp_properties.expno > 1 && exp_properties.taskno > taskNumbersPerExperiment[exp_properties.expno]) {
 			$.post(getcodeurl, { id: subject_id })
 			.done(function(dat) {
 			    if (dat) { 
 			  	    code = dat;
-			  	    $("#surveycode").html("<h1>Survey code: <br/><u style='border:1px solid green'>"+code+"</u></h2>");
-		  	    	$("*").enableSelection();
+			  	    $("#surveycode").html("<h1>Survey code:</h1><small><u style='border:1px solid green;'>"+code+"</u></small>");
+		  	    	$("#surveycode").enableSelection();
 		  	    	swalert("Finished experiment!", "Thank you for your participation!\nHere is your survey code: "+code, "success");
 		  	   }
 			});
@@ -441,7 +468,6 @@ Experiment = function() {
 					toid = drawRandom(ids2, 1)[0];
 				}
 			} while ((containsVector(distEstAsked, [fromid, toid]) || containsVector(distEstAsked, [toid, fromid])) && j++ < maxtries);
-			document.title = "maxtries";
 		}
 				
 		return [fromid, toid];
