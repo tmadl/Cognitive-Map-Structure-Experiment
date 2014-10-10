@@ -22,13 +22,13 @@ Experiment = function() {
 	var coords; // current building coordinates
 	var fuel = 100, cash = 100, has_package_from = null, delivered_to = null;
 	var MINCASHINCR = 10, MAXCASHINCR = 50;
-	var delivery_game = false, tsp_game = false;
+	var delivery_game = false, tsp_game = false, memorize_task = false;
 	
 	var data = {};
 	data.DISTSCALE = DISTSCALE;
 	
 	var exp_properties = {};
-	exp_properties.expno = 0; //0!!!
+	exp_properties.expno = 1; //0!!!
 	exp_properties.max_expno = 4;
 	
 	var DISTJUDGMENTS = 6;
@@ -38,8 +38,10 @@ Experiment = function() {
 	var cdistEst = -1;
 	var fromid, toid; //(for delivery or distance est.)
 	
-	//var taskNumbersPerExperiment = [-1, 30, 24, 24, 24];
-	var taskNumbersPerExperiment = [-1, 30, 24, 24, 12];
+	//var taskNumbersPerExperiment = [-1, 50, 24, 24, 12];
+	var taskNumbersPerExperiment = [-1, 15, 12, 12, 6];
+	
+	var SHOWDISTTASKS = 5; //show distance for first 5 tasks
 
 	var updateProgress = function() {
 		for (key in exp_properties) {
@@ -48,6 +50,7 @@ Experiment = function() {
 		$("#distance").val("");
 	};
 	
+	var itext = null;
 	this.exp1task = function() {
 		delivery_game = false;
 		DISTJUDGMENTS = 1;
@@ -59,14 +62,15 @@ Experiment = function() {
 		nextTask();
 	};
 	
+	var condition;
+	var DISTGROUPCOND = 2, REGCOND = 1, FUNCGROUPCOND=4, COLGROUPCOND=3;
 	this.exp2task = function() {
 		DISTJUDGMENTS = 6;
 		
 		var CONDITIONS = 4;
-		var DISTGROUPCOND = 2, REGCOND = 1, FUNCGROUPCOND=4, COLGROUPCOND=3;
 		
 		var ct = permuted_taskno[exp_properties.taskno-1]; //current task number, randomly permuted
-		var condition = ct % CONDITIONS + 1; //cycle through conditions
+		condition = ct % CONDITIONS + 1; //cycle through conditions
 		
 		// generate and store maps of experiment 2
 		var groups = 2 + Math.round(Math.random()); // 2 or 3 groups
@@ -81,13 +85,15 @@ Experiment = function() {
 			//cluster by color [c3] or function [c4] 
 			map.regularMap(groups, condition==FUNCGROUPCOND);
 		}
-		
+		 
 		if (condition == FUNCGROUPCOND) {
 			delivery_game = true;
+			memorize_task = false;
 			this.delivered = 0;
 		}
 		else {
 			delivery_game = false;
+			memorize_task = true;
 		}
 	};
 	this.exp2judged = function() {
@@ -228,9 +234,11 @@ Experiment = function() {
 		$(".deliver_task").hide();
 		$(".estimate_task").hide();
 		$(".tsp_task").hide();
+		$(".memorize_task").hide();
 		
 		if (delivery_game) {
 			$(".deliver_task").show();
+			$("#instructions_exp2b").show();
 			
 			pair = getBuildingPairForDelivery();
 			fromid = pair[0];
@@ -239,7 +247,7 @@ Experiment = function() {
 		else if (tsp_game) {
 			$(".tsp_task").show();
 		}
-		else {
+		else if (!memorize_task) {
 			var fixed_fromid = null;
 			if (exp_properties.expno == 3) 
 				fixed_fromid = objects.length-1; //in exp 3, always ask distance to middle (dec.boundary) building
@@ -251,18 +259,32 @@ Experiment = function() {
 			toid = pair[1];
 			distEstAsked.push(pair);
 			distanceEstimation = [-1, fromid, toid, distEstTypes[cdistEst]]; //distance, from, to, type	
+			
+			//renderDistance();
 		}
 		
-		if (!tsp_game) {
+		
+		if (memorize_task) {
+			$(".memorize_task").show();
+			$("#instructions_exp2a").hide();
+			$("#instructions_exp2b").hide();
+			if (condition == FUNCGROUPCOND) 
+				$("#instructions_exp2b").show();
+			else 
+				$("#instructions_exp2a").show();
+			$("#from").hide();
+			$("#to").hide();
+		}
+		else if (!tsp_game) { //distance estimations
 			try {
-				$("#distance").attr('title', map.getDistance(fromid, toid)); //! //$("#distance").val(""); //!
+				//$("#distance").attr('title', map.getDistance(fromid, toid)); //! //$("#distance").val(""); //!
 			} catch(e) {}
 			$("#from").text(map.labels[fromid]);
 			$("#to").text(map.labels[toid]);
 			$("#from").show();
 			$("#to").show();
 		}
-		else {
+		else if (tsp_game) {
 			$("#from").hide();
 			$("#to").hide();
 			$(".startbuilding").text(data["exp"+exp_properties.expno]["task"+exp_properties.taskno].startbuilding+1);
@@ -493,7 +515,7 @@ Experiment = function() {
 				nextTask();
 			}
 		}
-		else if (delivery_game || tsp_game) {
+		else if (delivery_game || tsp_game || memorize_task) {
 			if (delivery_game && (has_package_from != fromid || delivered_to != toid)) {
 				swalert("Please pick up a package from "+map.labels[fromid]+" and deliver it to "+map.labels[toid]+"! Press enter when finished.");
 			}
@@ -501,12 +523,13 @@ Experiment = function() {
 				swalert("Please deliver packages to all buildings, and then return to Building "+(data["exp"+exp_properties.expno]["task"+exp_properties.taskno].startbuilding+1)+"! Press enter when finished.");
 			}
 			else {
-				if (tsp_game) tsp_game = false;
+				tsp_game = false;
+				delivery_game = false;
+				memorize_task = false;
 				
 				$(".pressenter").css('color', '#ddeeff');
 				has_package_from = null;
 				delivered_to = null;
-				delivery_game = false;
 				$("#blocker").show();
 				$("#instructions_center").hide();
 				$("#congrats").hide();
@@ -579,10 +602,30 @@ Experiment = function() {
 	};
 	
 	var showDistance = function(est, reald) {
-		if (exp_properties.expno == 1 && exp_properties.taskno <= 5) { //exp1 first 5 tasks - show correct distance to user
+		if (exp_properties.expno == 1 && exp_properties.taskno <= SHOWDISTTASKS) { //exp1 first 5 tasks - show correct distance to user
 			delta = Math.abs(est - reald);
 			overunder = est > reald ? "over": "under";
 			swalert("The correct distance was "+reald, "You "+overunder+"estimated by "+delta+"\n\n(This information will only be shown "+(5 - exp_properties.taskno)+" more times)");
+		}
+	};
+	
+	var renderDistance = function() {
+		if (exp_properties.taskno <= SHOWDISTTASKS) {
+			if (itext) scene.remove(itext);
+			var text = get3DText("Distance: " + map.getDistance(fromid, toid)+" m", 0);
+			var x1=objects[0].position.x, x2=objects[1].position.x, z1=objects[0].position.z, z2=objects[1].position.z;
+			text.material.color.setHex(0xff0000);
+			text.position.y = 0;
+			var itext = new THREE.Object3D();
+			itext.position.x = (x1+x2)/2;
+			itext.position.z = (z1+z2)/2;
+			itext.add(text); 
+			itext.scale.set(100, 100, 100);
+			scene.add(itext);
+		}
+		else if (itext) {
+			scene.remove(itext);
+			itext = null;
 		}
 	};
 	

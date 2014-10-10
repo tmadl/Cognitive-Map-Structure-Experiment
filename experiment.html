@@ -82,17 +82,24 @@
 						(Building <span class="startbuilding"></span>), 
 						using the <b>shortest possible route</b>. Memorize the map and <span class="pressenter">press Enter</span> when done.
 					</span>
+					
+					<span class="memorize_task hidden">
+						Memorize building positions, and then press Enter.
+					</span>
 				</span>
 			</p>
 			<p align="justify">
 				<b><u>Instructions:</u></b>
 				<div id="instructions_exp0" class="hidden itxt"></div>
-				<div id="instructions_exp1" class="hidden">
+				<div id="instructions_exp1" class="hidden itxt">
 					Please find the two buildings in the environment (look around with your mouse), 
 					and then  <b>estimate the distance between them</b>.<br/><br/>
 					Please enter your estimated distance and press then press "Enter".
 				</div>
-				<div id="instructions_exp2" class="hidden itxt">
+				<div id="instructions_exp2a" class="hidden itxt">
+					Please memorize the positions of the buildings, and then press enter. 
+				</div>
+				<div id="instructions_exp2b" class="hidden itxt">
 					Please deliver at least one package:
 					<ul>
 						<li>Find the <b>Supplier</b> building and press E to pick up a package</li>
@@ -133,7 +140,7 @@
 			</p>
 		</div>
 		
-		<div id="minimap"></div>
+		<div id="minimap hidden"></div>
 		
 		<script src="js/map.js"></script>
 		<script src="js/experiment.js"></script>
