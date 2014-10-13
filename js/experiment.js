@@ -39,7 +39,7 @@ Experiment = function() {
 	var cdistEst = -1;
 	var fromid, toid; //(for delivery or distance est.)
 	
-	var taskNumbersPerExperiment = [-1, 40, 24, 32, 24];
+	var taskNumbersPerExperiment = [-1, 30, 24, 32, 24];
 	//var taskNumbersPerExperiment = [-1, 15, 12, 12, 6];
 	
 	var SHOWDISTTASKS = 5; //show distance for first 5 tasks
