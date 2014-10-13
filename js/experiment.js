@@ -33,6 +33,7 @@ Experiment = function() {
 	
 	var DISTJUDGMENTS = 6;
 	var distanceEstimation = [-1, -1, -1, -1]; //distance, from, to, type - 0 within, 1 across
+	var presentation_time = 0; //when distance estimation instructions are presented (in ms)
 	var distEstTypes = []; // within-cluster or across-cluster
 	var distEstAsked = []; // already asked 
 	var cdistEst = -1;
@@ -295,6 +296,7 @@ Experiment = function() {
 		}
 		
 		$("#current_task").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
+		presentation_time = new Date();
 	};
 	
 	this.resetTask = function() {
@@ -311,6 +313,7 @@ Experiment = function() {
 			//clear and initialize task data (real and estimated distances and building ids between which the distance was judged)
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno] = {};
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].distance_estimations = [];
+			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].response_latencies = [];
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_distances = [];
 			updateProgress();
 			
@@ -582,6 +585,7 @@ Experiment = function() {
 				var reald = map.getDistance(distanceEstimation[1], distanceEstimation[2]);
 				// store estimated and real distance
 				distanceEstimation[0] = est;
+				data["exp"+exp_properties.expno]["task"+exp_properties.taskno].response_latencies.push(new Date() - presentation_time);
 				data["exp"+exp_properties.expno]["task"+exp_properties.taskno].distance_estimations.push(distanceEstimation);
 				data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_distances.push(reald);
 				showDistance(est, reald);
