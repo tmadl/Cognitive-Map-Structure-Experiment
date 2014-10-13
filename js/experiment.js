@@ -61,6 +61,28 @@ Experiment = function() {
 		map.randomMap(2);
 	};
 	this.exp1judged = function() {
+		//check correlation
+		var n = Object.keys(experiment.getData().exp1).length;
+		if (n > 20) {
+			var dist = [], rdist = [];
+			var distsum = 0, distsumsq = 0, rdistsum = 0, rdistsumsq = 0, psum = 0;
+			for (k in data.exp1) {
+				var d = data.exp1[k].distance_estimations[0][0], rd = data.exp1[k].real_distances[0];
+				dist.push(d);
+				rdist.push(rd);
+				distsum += d; distsumsq += Math.pow(d, 2);
+				rdistsum += rd; rdistsumsq += Math.pow(rd, 2);
+				psum += d * rd;
+			}
+			var num = psum - (distsum * rdistsum / n);
+	  		var den = Math.sqrt((distsumsq - Math.pow(distsum, 2) / n) * (rdistsumsq - Math.pow(rdistsum, 2) / n));
+  			var r = num / den;
+  			if (isNaN(r) || r < 0.5) {
+  				alert("Your distance estimations are too inaccurate. Please try again.");
+  				location.reload();
+  			}
+  		}
+		
 		//distance judged - next map
 		nextTask();
 	};
