@@ -22,14 +22,14 @@ Experiment = function() {
 	var coords; // current building coordinates
 	var fuel = 100, cash = 0, has_package_from = null, delivered_to = null;
 	var MINCASHINCR = 10, MAXCASHINCR = 50;
-	var delivery_game = false, tsp_game = false, memorize_task = false;
+	var delivery_game = false, tsp_game = false, memorize_task = false, estimate_task = false;
 	
 	var data = {};
 	data.DISTSCALE = DISTSCALE;
 	
 	var exp_properties = {};
 	exp_properties.expno = 0; //0!!!
-	exp_properties.max_expno = 4;
+	exp_properties.max_expno = 4; //5
 	
 	var DISTJUDGMENTS = 6;
 	var distanceEstimation = [-1, -1, -1, -1]; //distance, from, to, type - 0 within, 1 across
@@ -39,7 +39,7 @@ Experiment = function() {
 	var cdistEst = -1;
 	var fromid, toid; //(for delivery or distance est.)
 	
-	var taskNumbersPerExperiment = [-1, 30, 24, 32, 24];
+	var taskNumbersPerExperiment = [-1, 20, 12, 12, 12, 12];
 	//var taskNumbersPerExperiment = [-1, 15, 12, 12, 6];
 	
 	var SHOWDISTTASKS = 5; //show distance for first 5 tasks
@@ -61,9 +61,11 @@ Experiment = function() {
 		map.randomMap(2);
 	};
 	this.exp1judged = function() {
+		$("#blocker").css('background-color', 'rgba(0,0,0,0.5)');
+		this.blocked = false;
 		//check correlation
 		var n = Object.keys(experiment.getData().exp1).length;
-		if (n > 20) {
+		if (n > 10) {
 			var dist = [], rdist = [];
 			var distsum = 0, distsumsq = 0, rdistsum = 0, rdistsumsq = 0, psum = 0;
 			for (k in data.exp1) {
@@ -77,13 +79,14 @@ Experiment = function() {
 			var num = psum - (distsum * rdistsum / n);
 	  		var den = Math.sqrt((distsumsq - Math.pow(distsum, 2) / n) * (rdistsumsq - Math.pow(rdistsum, 2) / n));
   			var r = num / den;
-  			if (isNaN(r) || r < 0.5) {
+  			if (isNaN(r) || r < 0.3) {
   				alert("Your distance estimations are too inaccurate. Please try again.");
   				location.reload();
   			}
   		}
 		
 		//distance judged - next map
+		estimate_task = false;
 		nextTask();
 	};
 	
@@ -129,6 +132,7 @@ Experiment = function() {
 			updateTaskInstruction();
 		}
 		else {
+			estimate_task = false;
 			//showMapOverlay();
 			$("#blocker").css('background-color', 'rgba(0,0,0,0.5)');
 			this.blocked = false;
@@ -197,7 +201,7 @@ Experiment = function() {
 		var ct = permuted_taskno[exp_properties.taskno-1]; //current task number, randomly permuted
 		var condition = ct % CONDITIONS + 1; //cycle through conditions
 		
-		var buildings = 6;
+		var buildings = 5;
 		
 		// generate and store maps of experiment 2
 		var groups = 2; 
@@ -213,11 +217,13 @@ Experiment = function() {
 		}
 		
 		delivery_game = false;
+		estimate_task = false;
 		tsp_game = true;
 		this.delivered = 0;
 		delivered_to = -1;
 		$("#package").removeClass("package_empty");
 		$("#package").addClass("package");
+		$("#packagetxt").show();
 	};
 	
 	this.exp4judged = function() {
@@ -236,6 +242,18 @@ Experiment = function() {
 		}
 	};	
 	
+	this.exp5task = function() {
+		delivery_game = false;
+		DISTJUDGMENTS = 0;
+		// generate and store map of experiment 5 (building group)
+		var res = map.groupedMap(1, 0, 0, 3);
+		var coords = res[0];
+	};
+	this.exp5judged = function() {
+		//distance judged - next map
+		nextTask();
+	};
+	
 	var getDBBiases = function(taskno) {
 		var expno = 3; // DB estimated in exp 3
 		var biases_by_map = [[], []];
@@ -251,16 +269,16 @@ Experiment = function() {
 	
 	
 	var flashCongrats = function() {
-		swalert("Good job!", "You finished task "+exp_properties.taskno+"!", "success");
+		swalert("Good job!", "You finished task "+exp_properties.taskno+"!\n"+(taskNumbersPerExperiment[exp_properties.taskno]-exp_properties.taskno+1) + " tasks remain\n\nPress Enter to continue", "success");
 		//$("#instructions_center").hide();$("#blocker").show();$("#congrats").show();
 		//setTimeout('$("#instructions_center").show();$("#blocker").hide();$("#congrats").hide();lockPointer();', 2000);
 	};
 	
 	var updateTaskInstruction = function() {
-		$(".deliver_task").hide();
-		$(".estimate_task").hide();
-		$(".tsp_task").hide();
-		$(".memorize_task").hide();
+		$(".task").hide();
+		
+		$("#from").hide();
+		$("#to").hide();
 		
 		if (delivery_game) {
 			$(".deliver_task").show();
@@ -269,15 +287,21 @@ Experiment = function() {
 			pair = getBuildingPairForDelivery();
 			fromid = pair[0];
 			toid = pair[1];
+			$("#from").text(map.labels[fromid]);
+			$("#to").text(map.labels[toid]);
+			$("#from").show();
+			$("#to").show();
 		}
 		else if (tsp_game) {
 			$(".tsp_task").show();
 		}
-		else if (!memorize_task) {
+		else if (estimate_task) {
 			var fixed_fromid = null;
 			if (exp_properties.expno == 3) 
 				fixed_fromid = objects.length-1; //in exp 3, always ask distance to middle (dec.boundary) building
 			
+			$("#from").show();
+			$("#to").show();
 			$(".estimate_task").show();
 			pair = getBuildingPairForDistanceEstimation(fixed_fromid);
 			
@@ -288,20 +312,21 @@ Experiment = function() {
 			
 			//renderDistance();
 		}
+		else {
+			$(".remember_task").show();
+		}
 		
 		
 		if (memorize_task) {
-			$(".memorize_task").show();
+			$(".remember_task").show();
 			$("#instructions_exp2a").hide();
 			$("#instructions_exp2b").hide();
 			if (condition == FUNCGROUPCOND) 
 				$("#instructions_exp2b").show();
 			else 
 				$("#instructions_exp2a").show();
-			$("#from").hide();
-			$("#to").hide();
 		}
-		else if (!tsp_game) { //distance estimations
+		else if (estimate_task) { //distance estimations
 			try {
 				//$("#distance").attr('title', map.getDistance(fromid, toid)); //! //$("#distance").val(""); //!
 			} catch(e) {}
@@ -327,6 +352,8 @@ Experiment = function() {
 		nextTask();
 	};
 	
+	var phi = 0;
+	this.getPhi = function() {return phi;};
 	var nextTask = function() {
 		exp_properties.taskno++;
 		if (exp_properties.taskno <= taskNumbersPerExperiment[exp_properties.expno]) {
@@ -346,12 +373,33 @@ Experiment = function() {
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].cluster_assignments = map.cluster_assignments;
 			
 			// reset camera to somewhere near the existing buildings (but not within them)
-			var i = Math.floor(Math.random()*objects.length);
-			while (!objects[i]) i = Math.floor(Math.random()*objects.length);
-			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].startbuilding = i;
-			controls.getObject().position.x = objects[i].position.x + buildingwidthpx*1.5;
-			controls.getObject().position.z = objects[i].position.z + buildingwidthpx*1.5;
-			controls.getObject().rotation.y = 0.8;
+			if (exp_properties.expno == 4) { //adjacent to one rnd building, for tsp; otherwise farther away, bldgs in view 
+				var i = Math.floor(Math.random()*objects.length);
+				while (!objects[i]) i = Math.floor(Math.random()*objects.length);
+				data["exp"+exp_properties.expno]["task"+exp_properties.taskno].startbuilding = i;
+				controls.getObject().position.x = objects[i].position.x + buildingwidthpx*1.5;
+				controls.getObject().position.z = objects[i].position.z + buildingwidthpx*1.5;
+				controls.getObject().rotation.y = 0.8;
+				tsp_game = true;
+				estimate_task = false;
+			}
+			else {
+				var centroid = map.getCentroid(range(0, objects.length-1));
+				var farthest_id = -1, farthest_dist = Infinity;
+				for (var i = 0; i < objects.length - 1; i++) {
+					var d = getDistance(map.building_coords[i][0], map.building_coords[i][1], centroid[0], centroid[1]);
+					if (d < farthest_dist) {
+						farthest_dist = d;
+						farthest_id = i;
+					}
+				}
+				var d = farthest_dist + 80;
+				phi = Math.random()*Math.PI*2;
+				controls.getObject().position.x = (centroid[0] + d*Math.cos(phi))*DISTSCALE;
+				controls.getObject().position.z = (centroid[1] + d*Math.cos(phi))*DISTSCALE;
+				controls.getObject().rotation.y = 3.8; //(Math.PI*2/3 + phi) % (Math.PI*2);
+			}
+			
 			
 			//set up distance estimations
 			cdistEst = 0;
@@ -582,6 +630,7 @@ Experiment = function() {
 				tsp_game = false;
 				delivery_game = false;
 				memorize_task = false;
+				estimate_task = true;
 				
 				$(".pressenter").css('color', '#ddeeff');
 				has_package_from = null;
@@ -597,22 +646,36 @@ Experiment = function() {
 			}
 		}
 		else {
-			//record distance estimate
-			est = parseInt($("#distance").val());
-			if (isNaN(est)) {
-				swalert("Please enter an estimated distance!\n(Make sure it is a valid number)");
+			if (!estimate_task) {
+				estimate_task = true;
+				
+				$("#blocker").show();
+				$("#instructions_center").hide();
+				$("#congrats").hide();
+				controls.enabled = false;
+				$("#blocker").css('background-color', 'rgba(150,150,150,1)');
+				this.blocked = true;
+				
+				updateTaskInstruction();
 			}
 			else {
-				// get real distance
-				var reald = map.getDistance(distanceEstimation[1], distanceEstimation[2]);
-				// store estimated and real distance
-				distanceEstimation[0] = est;
-				data["exp"+exp_properties.expno]["task"+exp_properties.taskno].response_latencies.push(new Date() - presentation_time);
-				data["exp"+exp_properties.expno]["task"+exp_properties.taskno].distance_estimations.push(distanceEstimation);
-				data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_distances.push(reald);
-				showDistance(est, reald);
-				
-				experiment["exp"+exp_properties.expno+"judged"]();
+				//record distance estimate
+				est = parseInt($("#distance").val());
+				if (isNaN(est)) {
+					swalert("Please enter an estimated distance!\n(Make sure it is a valid number)");
+				}
+				else {
+					// get real distance
+					var reald = map.getDistance(distanceEstimation[1], distanceEstimation[2]);
+					// store estimated and real distance
+					distanceEstimation[0] = est;
+					data["exp"+exp_properties.expno]["task"+exp_properties.taskno].response_latencies.push(new Date() - presentation_time);
+					data["exp"+exp_properties.expno]["task"+exp_properties.taskno].distance_estimations.push(distanceEstimation);
+					data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_distances.push(reald);
+					showDistance(est, reald);
+					
+					experiment["exp"+exp_properties.expno+"judged"]();
+				}
 			}
 		}
 	};
@@ -625,7 +688,7 @@ Experiment = function() {
 				minid = i;
 			}
 		}
-		if (mind < BUILDINGWIDTH) {
+		if (mind < BUILDINGWIDTH*2) {
 			var func = map.labels[minid].toLowerCase();
 			if (func.indexOf("gas") > -1 || fuel < 10) { // gas station - fill up
 				cash -= 100 - fuel;
@@ -636,14 +699,22 @@ Experiment = function() {
 				has_package_from = minid;
 				$("#package").removeClass("package_empty");
 				$("#package").addClass("package");
+				$("#packagetxt").show();
 				$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
+				
+				objects[minid].children[1].material.color.setHex(0x000000);
+				objects[minid].children[2].material.color.setHex(0x000000);
 			}
 			else if (func.indexOf("customer") > -1 && has_package_from != null) { // customer - deliver package
 				delivered_to = minid;
 				$("#package").addClass("package_empty");
 				$("#package").removeClass("package");
+				$("#packagetxt").hide();
 				$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
 				cash += Math.round(Math.random()*(MAXCASHINCR-MINCASHINCR)) + MINCASHINCR;
+				
+				objects[minid].children[1].material.color.setHex(0x000000);
+				objects[minid].children[2].material.color.setHex(0x000000);
 				
 				if (has_package_from == fromid && delivered_to == toid) $(".pressenter").css('color', '#00ff00');
 			}
@@ -662,7 +733,7 @@ Experiment = function() {
 		if (exp_properties.expno == 1 && exp_properties.taskno <= SHOWDISTTASKS) { //exp1 first 5 tasks - show correct distance to user
 			delta = Math.abs(est - reald);
 			overunder = est > reald ? "over": "under";
-			swalert("The correct distance was "+reald, "You "+overunder+"estimated by "+delta+"\n\n(This information will only be shown "+(5 - exp_properties.taskno)+" more times)");
+			swalert("Thank you! The actual distance was "+reald, "You "+overunder+"estimated by "+delta+". This information can help you adjust your estimations (please note that your input will still be accepted, and that it's impossible to perfectly estimate these distances).\n\n(This information will only be shown "+(SHOWDISTTASKS - exp_properties.taskno)+" more times)\n\nPress Enter to continue");
 		}
 	};
 	
@@ -699,9 +770,15 @@ Experiment = function() {
 					minid = i;
 				}
 			}
-			if (mind < BUILDINGWIDTH && data["exp"+exp_properties.expno]["task"+exp_properties.taskno].startbuilding && minid == data["exp"+exp_properties.expno]["task"+exp_properties.taskno].startbuilding) {
+			var startbuilding = -1;
+			try {
+				startbuilding = data["exp"+exp_properties.expno]["task"+exp_properties.taskno].startbuilding;
+			}
+			catch (exc) {}
+			if (tsp_game && mind < 2*BUILDINGWIDTH && minid == startbuilding) {
 				$(".pressenter").css('color', '#00ff00');
 				delivered_to = minid;
+				$("#packagetxt").hide();
 			}
 		}
 		
@@ -795,6 +872,14 @@ function showMapOverlay() {
 }
 
 ////
+
+function range(start, end) {
+    var foo = [];
+    for (var i = start; i <= end; i++) {
+        foo.push(i);
+    }
+    return foo;
+}
 
 function shuffle(arr) {
 	if (typeof arr == "number") {

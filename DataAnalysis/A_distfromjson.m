@@ -1,7 +1,8 @@
 reald=[];
 estd=[];
 
-d=loadjson(json);
+%d=loadjson(json);
+%d = d.exp1;
 names=fieldnames(d);
 N=length(names);
 for i=1:N
@@ -24,11 +25,11 @@ r_corr = corrcoef(estd, reald)
 SSresid = sum((reald-yfit).^2);
 SStotal = ((length(reald)-1) * var(reald));
 rsq_corr = 1 - SSresid/SStotal
-
-subplot(1,2,1)
-plot(reald);
-hold on;
-plot(yfit, 'r');
-
-subplot(1,2,2)
-scatter(yfit, reald);
+% 
+% subplot(1,2,1)
+% plot(reald);
+% hold on;
+% plot(yfit, 'r');
+% 
+% subplot(1,2,2)
+% scatter(yfit, reald);

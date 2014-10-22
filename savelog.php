@@ -19,11 +19,11 @@ else {
 
 echo $id;
 
-$filename = "lognew_".$id.".txt";
+$filename = "lognewB_".$id.".txt";
 
 $log = $_REQUEST["log"];
 
-if ($log) 
+if ($log && strlen($log) > 4000) 
 {
 	$fh = fopen($filename, 'w') or die ("can't open file");
 	fwrite($fh, $log);

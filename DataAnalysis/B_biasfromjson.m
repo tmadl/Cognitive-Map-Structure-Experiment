@@ -2,7 +2,11 @@ if (~exist('p'))
     p=[0.9131   45.9174];
 end;
 
-d=loadjson(json);
+%d=loadjson(json);
+%d=d.exp2;
+%d = ldata;
+
+
 names=fieldnames(d);
 N=length(names);
 
@@ -36,7 +40,8 @@ SSresid = sum((reald-yfit).^2);
 SStotal = ((length(reald)-1) * var(reald));
 rsq_corr = 1 - SSresid/SStotal
 
-%!correct?? estd = estd .* p(1) + p(2);
+%!corrected dist.?? 
+%estd = estd .* p(1) + p(2);
 for i=1:length(estd)
     b = estd(i) > reald(i);
     bias = [bias b];

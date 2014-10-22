@@ -68,24 +68,21 @@
 			<h3 align="center">Experiment <span class="expno">1</span> / <span class="max_expno">1</span></h2>
 			<h4 align="center">Task <span class="taskno">1</span> / <span class="max_taskno">1</span></h2>
 			<p align="center" id="current_task">
-					<span class="estimate_task">Estimate the distance between<br/></span>				<span class="deliver_task hidden">Pick up package from </span>
+					<span class="remember_task task">Please remember the positions of the buildings and then press Enter.</span>
+				
+					<span class="estimate_task task hidden">Estimate the distance between<br/></span>				<span class="deliver_task task hidden">Pick up package from </span>
 					
 						<span id="from">Building 1</span>
 						
-					<span class="estimate_task">and </span>												<span class="deliver_task hidden">,<br/>deliver it to </span>
+					<span class="estimate_task task hidden">and </span>												<span class="deliver_task task hidden">,<br/>deliver it to </span>
 					
 						<span id="to">Building 2</span>
 						
-					<span class="estimate_task">:<br/><input id="distance" size="12"/> meters.</span>	<span class="deliver_task hidden">, memorize<br/>the map and then <span class="pressenter">press Enter</span></span>
+					<span class="estimate_task task hidden">:<br/><input id="distance" size="12"/> meters.</span>	<span class="deliver_task task hidden">, memorize<br/>the map and then <span class="pressenter">press Enter</span></span>
 					
-					<span class="tsp_task hidden">
-						Deliver packages to all buildings, and then return to where you started
-						(Building <span class="startbuilding"></span>), 
+					<span class="tsp_task task hidden">
+						Deliver packages to all buildings (press E near them), starting with Building <span class="startbuilding"></span>, and then return to Building <span class="startbuilding"></span>, 
 						using the <b>shortest possible route</b>. Memorize the map and <span class="pressenter">press Enter</span> when done.
-					</span>
-					
-					<span class="memorize_task hidden">
-						Memorize building positions, and then press Enter.
 					</span>
 				</span>
 			</p>
@@ -94,8 +91,8 @@
 				<div id="instructions_exp0" class="hidden itxt"></div>
 				<div id="instructions_exp1" class="hidden itxt">
 					Please find the two buildings in the environment (look around with your mouse), 
-					and then  <b>estimate the distance between them</b>.<br/><br/>
-					Please enter your estimated distance and press then press "Enter".
+					<b>memorize their positions</b>, press Enter, and then estimate the distance between them.<br/><br/>
+					Note: all buildings are always 50m high (and 25m wide).
 				</div>
 				<div id="instructions_exp2a" class="hidden itxt">
 					Please memorize the positions of the buildings, and then press enter. 
@@ -122,6 +119,8 @@
 					<br/><br/>
 					Only visit each building once (except for the starting building).
 				</div>
+				<br/><br/>
+				<div id="packagetxt" class="hidden itxt" style="color:#00ff00">You've got a package. Now deliver it.</div>
 			</p>
 			
 			<p align="justify" id="controls">

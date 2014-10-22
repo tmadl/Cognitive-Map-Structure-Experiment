@@ -59,12 +59,12 @@ function setupScene() {
 
 	document.body.appendChild( renderer.domElement );
 	
-
+/*
 	stats = new Stats();
 	stats.domElement.style.position = 'absolute';
 	stats.domElement.style.bottom = '0px';
 	document.body.appendChild(stats.domElement);
-
+*/
 	//
 	window.addEventListener( 'resize', onWindowResize, false );
 	
@@ -88,7 +88,7 @@ function animate() {
 
 	controls.update();
 	
-	stats.update();
+	//if (stats) stats.update();
 
 	renderer.render( scene, camera );
 	

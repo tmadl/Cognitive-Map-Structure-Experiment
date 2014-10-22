@@ -1,0 +1,1 @@
+{"DISTSCALE":0.17482517482517482,"exp1":{"task1":{"distance_estimations":[],"response_latencies":[],"real_distances":[],"real_coords":[[30.33279930241406,178.00761305261403],[128.11247224453837,415.28593143448234]],"cluster_assignments":[0,0],"startbuilding":0}}}

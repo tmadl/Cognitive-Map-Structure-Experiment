@@ -58,7 +58,7 @@ Map = function() {
 	};
 
 	this.decisionboundaryMap = function(features) {
-		var BUILDINGS = 6;
+		var BUILDINGS = 4;
 		var groups = 2;
 		
 		this.clusters = groups;
