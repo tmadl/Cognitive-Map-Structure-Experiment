@@ -4,7 +4,6 @@ var objects = []; // actual objects in current scene
 
 var experiment;
 
-var serverlogurl="", getcodeurl="";
 var serverlogurl = "http://madlnet.net/tsworks/savelog.php"; //takes the log POST parameter, writes a log file, and returns subject id
 var getcodeurl = "http://madlnet.net/tsworks/getcode.php";
 var subject_id = -1; 
