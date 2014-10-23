@@ -572,6 +572,8 @@ var rndColors = function(n) {
 };
 
 function intToCol(i, len) {
+	if (!i) 
+		i=0;
 	if (!len) len = 6;
 	var col = i.toString(16);
 	while (col.length < len) col += "0";

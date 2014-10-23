@@ -1,9 +1,10 @@
-var houses = {}; // possible house objects to copy from
+houses = {}; // possible house objects to copy from
 var objects = []; // actual objects in current scene
 //var boundingboxes = [];
 
 var experiment;
 
+var serverlogurl="", getcodeurl="";
 var serverlogurl = "http://madlnet.net/tsworks/savelog.php"; //takes the log POST parameter, writes a log file, and returns subject id
 var getcodeurl = "http://madlnet.net/tsworks/getcode.php";
 var subject_id = -1; 
@@ -16,6 +17,7 @@ function init() {
 	experiment.run();
 }
 
+var current_dollars = [];
 
 Experiment = function() {	
 	var map = new Map();
@@ -28,10 +30,10 @@ Experiment = function() {
 	data.DISTSCALE = DISTSCALE;
 	
 	var exp_properties = {};
-	exp_properties.expno = 0; //0!!!
+	exp_properties.expno = 0; //0
 	exp_properties.max_expno = 4; //5
 	
-	var DISTJUDGMENTS = 6;
+	var DISTJUDGMENTS = 4;
 	var distanceEstimation = [-1, -1, -1, -1]; //distance, from, to, type - 0 within, 1 across
 	var presentation_time = 0; //when distance estimation instructions are presented (in ms)
 	var distEstTypes = []; // within-cluster or across-cluster
@@ -39,10 +41,14 @@ Experiment = function() {
 	var cdistEst = -1;
 	var fromid, toid; //(for delivery or distance est.)
 	
-	var taskNumbersPerExperiment = [-1, 20, 12, 12, 12, 12];
+	var taskNumbersPerExperiment = [-1, 40, 12, 12, 12, 12];
+	var acceptableDistanceError = 20; // percent error acceptable
+	var requiredAcceptableJudgments = 4;
 	//var taskNumbersPerExperiment = [-1, 15, 12, 12, 6];
 	
-	var SHOWDISTTASKS = 5; //show distance for first 5 tasks
+	var SHOWDISTTASKS = Infinity; //show distance for first 5 tasks
+	
+	var MAX_DOLLARS = 10, MIN_DOLLARS = 5;
 
 	var updateProgress = function() {
 		for (key in exp_properties) {
@@ -65,7 +71,7 @@ Experiment = function() {
 		this.blocked = false;
 		//check correlation
 		var n = Object.keys(experiment.getData().exp1).length;
-		if (n > 10) {
+		if (n > 20) {
 			var dist = [], rdist = [];
 			var distsum = 0, distsumsq = 0, rdistsum = 0, rdistsumsq = 0, psum = 0;
 			for (k in data.exp1) {
@@ -80,25 +86,45 @@ Experiment = function() {
 	  		var den = Math.sqrt((distsumsq - Math.pow(distsum, 2) / n) * (rdistsumsq - Math.pow(rdistsum, 2) / n));
   			var r = num / den;
   			if (isNaN(r) || r < 0.3) {
-  				alert("Your distance estimations are too inaccurate. Please try again.");
-  				location.reload();
+  				alert("Your distance estimations are too inaccurate. Please try harder.");
+  				//location.reload();
   			}
   		}
 		
 		//distance judged - next map
 		estimate_task = false;
+		
+		var rd = data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_distances[data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_distances.length - 1];
+		var d = data["exp"+exp_properties.expno]["task"+exp_properties.taskno].distance_estimations[data["exp"+exp_properties.expno]["task"+exp_properties.taskno].distance_estimations.length - 1];
+		d = d[0];
+		var perc = Math.abs(Math.round(100.0/rd*d) - 100);
+		if (perc < acceptableDistanceError) {
+			acceptablejudgments++;
+			if (acceptablejudgments >= requiredAcceptableJudgments) {
+				swalert("Good job!", "Your distance estimations are accurate. You can now proceed to experiment 2.\n\nPress Enter to continue", "success");
+				nextExperiment();
+				return false;
+			}
+		}
+		else {
+			acceptablejudgments = 0;
+		}
+		
 		nextTask();
 	};
 	
 	var condition;
-	var DISTGROUPCOND = 2, REGCOND = 1, FUNCGROUPCOND=4, COLGROUPCOND=3;
+	//var DISTGROUPCOND = 2, REGCOND = 1, FUNCGROUPCOND=4, COLGROUPCOND=3;
+	var DISTGROUPCOND = 1, FUNCGROUPCOND=3, COLGROUPCOND=2;
 	this.exp2task = function() {
-		DISTJUDGMENTS = 6;
+		DISTJUDGMENTS = 4;
 		
-		var CONDITIONS = 4;
+		var CONDITIONS = 3; //4
 		
 		var ct = permuted_taskno[exp_properties.taskno-1]; //current task number, randomly permuted
 		condition = ct % CONDITIONS + 1; //cycle through conditions
+		
+		data["exp"+exp_properties.expno]["task"+exp_properties.taskno].condition = condition;
 		
 		// generate and store maps of experiment 2
 		//var groups = 2 + Math.round(Math.random()); // 2 or 3 groups
@@ -106,9 +132,9 @@ Experiment = function() {
 		if (condition == DISTGROUPCOND) {
 			map.groupedMap(groups);
 		}
-		else if (condition == REGCOND) { // regular, no sp. clusters
+		/*else if (condition == REGCOND) { // regular, no sp. clusters
 			map.regularMap();
-		}
+		}*/
 		else { // equidistant, group by function or color
 			//if (fuel < 20 && condition==FUNCGROUPCOND) groups = 3; // ensure there is a petrol station when fuel is low
 			//cluster by color [c3] or function [c4] 
@@ -133,12 +159,11 @@ Experiment = function() {
 		}
 		else {
 			estimate_task = false;
-			//showMapOverlay();
 			$("#blocker").css('background-color', 'rgba(0,0,0,0.5)');
 			this.blocked = false;
-			flashCongrats();	
 
-			nextTask();
+			//nextTask();
+			showMapOverlay();
 		}
 	};	
 	
@@ -183,23 +208,24 @@ Experiment = function() {
 			updateTaskInstruction();
 		}
 		else {
-			//showMapOverlay();
 			$("#blocker").css('background-color', 'rgba(0,0,0,0.5)');
 			this.blocked = false;
-			flashCongrats();	
 
-			nextTask();
+			//nextTask();
+			showMapOverlay();
 		}
 	};
 	
 	this.exp4task = function() {
-		DISTJUDGMENTS = 6;
+		DISTJUDGMENTS = 4;
 		
 		var CONDITIONS = 3;
 		var DISTGROUPCOND = 2, REGCOND = 1, COLGROUPCOND=3;
 		
 		var ct = permuted_taskno[exp_properties.taskno-1]; //current task number, randomly permuted
 		var condition = ct % CONDITIONS + 1; //cycle through conditions
+		
+		data["exp"+exp_properties.expno]["task"+exp_properties.taskno].condition = condition;
 		
 		var buildings = 5;
 		
@@ -233,12 +259,11 @@ Experiment = function() {
 			updateTaskInstruction();
 		}
 		else {
-			//showMapOverlay();
 			$("#blocker").css('background-color', 'rgba(0,0,0,0.5)');
 			this.blocked = false;
-			flashCongrats();	
 
-			nextTask();
+			//nextTask();
+			showMapOverlay();
 		}
 	};	
 	
@@ -269,7 +294,7 @@ Experiment = function() {
 	
 	
 	var flashCongrats = function() {
-		swalert("Good job!", "You finished task "+exp_properties.taskno+"!\n"+(taskNumbersPerExperiment[exp_properties.taskno]-exp_properties.taskno+1) + " tasks remain\n\nPress Enter to continue", "success");
+		swalert("Good job!", "You finished task "+exp_properties.taskno+"!\n"+(taskNumbersPerExperiment[exp_properties.expno]-exp_properties.taskno) + " tasks remain\n\nPress Enter to continue", "success");
 		//$("#instructions_center").hide();$("#blocker").show();$("#congrats").show();
 		//setTimeout('$("#instructions_center").show();$("#blocker").hide();$("#congrats").hide();lockPointer();', 2000);
 	};
@@ -354,6 +379,7 @@ Experiment = function() {
 	
 	var phi = 0;
 	this.getPhi = function() {return phi;};
+	
 	var nextTask = function() {
 		exp_properties.taskno++;
 		if (exp_properties.taskno <= taskNumbersPerExperiment[exp_properties.expno]) {
@@ -361,6 +387,7 @@ Experiment = function() {
 			map.clearMap();
 			//clear and initialize task data (real and estimated distances and building ids between which the distance was judged)
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno] = {};
+			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].condition = "";
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].distance_estimations = [];
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].response_latencies = [];
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_distances = [];
@@ -373,6 +400,18 @@ Experiment = function() {
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].cluster_assignments = map.cluster_assignments;
 			
 			// reset camera to somewhere near the existing buildings (but not within them)
+			var centroid = map.getCentroid(range(0, objects.length-1));
+			var farthest_id = -1, farthest_dist = -Infinity;
+			for (var i = 0; i < objects.length - 1; i++) {
+				var d = getDistance(map.building_coords[i][0], map.building_coords[i][1], centroid[0], centroid[1]);
+				if (d > farthest_dist) {
+					farthest_dist = d;
+					farthest_id = i;
+				}
+			}
+			farthest_dist = farthest_dist + 80;
+			var d = farthest_dist;
+			phi = Math.random()*Math.PI*2;
 			if (exp_properties.expno == 4) { //adjacent to one rnd building, for tsp; otherwise farther away, bldgs in view 
 				var i = Math.floor(Math.random()*objects.length);
 				while (!objects[i]) i = Math.floor(Math.random()*objects.length);
@@ -384,22 +423,37 @@ Experiment = function() {
 				estimate_task = false;
 			}
 			else {
-				var centroid = map.getCentroid(range(0, objects.length-1));
-				var farthest_id = -1, farthest_dist = Infinity;
-				for (var i = 0; i < objects.length - 1; i++) {
-					var d = getDistance(map.building_coords[i][0], map.building_coords[i][1], centroid[0], centroid[1]);
-					if (d < farthest_dist) {
-						farthest_dist = d;
-						farthest_id = i;
-					}
-				}
-				var d = farthest_dist + 80;
-				phi = Math.random()*Math.PI*2;
-				controls.getObject().position.x = (centroid[0] + d*Math.cos(phi))*DISTSCALE;
-				controls.getObject().position.z = (centroid[1] + d*Math.cos(phi))*DISTSCALE;
-				controls.getObject().rotation.y = 3.8; //(Math.PI*2/3 + phi) % (Math.PI*2);
+				controls.getObject().position.x = (centroid[0] + farthest_dist*Math.cos(phi)) / DISTSCALE;
+				controls.getObject().position.z = (centroid[1] + farthest_dist*Math.sin(phi)) / DISTSCALE;
+				controls.getObject().rotation.y = 7.8 - phi;//3.8; //(Math.PI*2/3 + phi) % (Math.PI*2);
 			}
 			
+			// add some dollars
+			$(".dollarvis").hide();
+			if (exp_properties.expno > 1) {
+				for (var i = 0; i < current_dollars.length; i++) {
+					scene.remove(current_dollars[i]);
+				}
+				current_dollars = [];
+				var n_dollars = (exp_properties.taskno%2) ? MAX_DOLLARS : MIN_DOLLARS;
+				data["exp"+exp_properties.expno]["task"+exp_properties.taskno].n_dollars = n_dollars;
+				farthest_dist *= 1.5;
+				for (var i = 0; i < n_dollars; i++) {
+					var d = dollars.clone();
+					//var x = (centroid[0] + Math.random()*farthest_dist - farthest_dist/2);
+					//var z = (centroid[1] + Math.random()*farthest_dist - farthest_dist/2);
+					var pos = rndNotTooClose(map.building_coords, 
+								function() {return (centroid[0] + Math.random()*farthest_dist - farthest_dist/2);},
+								function() {return (centroid[1] + Math.random()*farthest_dist - farthest_dist/2);}
+							  );
+					d.position.x = pos[0] / DISTSCALE;
+					d.position.z = pos[1] / DISTSCALE;
+					current_dollars.push(d);
+					scene.add(d);
+				}
+				$(".dollarvis").show();
+				$(".dollars").text(n_dollars);
+			}
 			
 			//set up distance estimations
 			cdistEst = 0;
@@ -610,16 +664,24 @@ Experiment = function() {
 				data["exp"+exp_properties.expno]["task"+exp_properties.taskno].rememberedX = rememberedbuildingx;
 				data["exp"+exp_properties.expno]["task"+exp_properties.taskno].rememberedY = rememberedbuildingy;
 				
+				lockPointer();
 				mapcanvasshown = false;
 				$("#instructions_center").show();
 				$("#mapcanvas").hide();
 				$("#mapinstructions").hide();
 				$("#blocker").hide();
+				$(".drag_task").hide();
 				
+				flashCongrats();
 				nextTask();
 			}
 		}
 		else if (delivery_game || tsp_game || memorize_task) {
+			if (current_dollars.length > 0) {
+				swalert("Please collect all dollar notes (and memorize the map)!");
+				return false;
+			}
+			
 			if (delivery_game && (has_package_from != fromid || delivered_to != toid)) {
 				swalert("Please pick up a package from "+map.labels[fromid]+" and deliver it to "+map.labels[toid]+"! Press enter when finished.");
 			}
@@ -729,11 +791,13 @@ Experiment = function() {
 		}
 	};
 	
+	var acceptablejudgments = 0;
 	var showDistance = function(est, reald) {
 		if (exp_properties.expno == 1 && exp_properties.taskno <= SHOWDISTTASKS) { //exp1 first 5 tasks - show correct distance to user
 			delta = Math.abs(est - reald);
 			overunder = est > reald ? "over": "under";
-			swalert("Thank you! The actual distance was "+reald, "You "+overunder+"estimated by "+delta+". This information can help you adjust your estimations (please note that your input will still be accepted, and that it's impossible to perfectly estimate these distances).\n\n(This information will only be shown "+(SHOWDISTTASKS - exp_properties.taskno)+" more times)\n\nPress Enter to continue");
+			perc = Math.round((100/reald)*delta);
+			swalert("Thank you! The actual distance was "+reald, "You "+overunder+"estimated by "+delta+" ("+perc+" %). This information can help you adjust your estimations.\n\nYou can proceed to the next experiment once you consistently make less than 20% mistakes.\n\nPress Enter to continue");
 		}
 	};
 	
@@ -761,6 +825,22 @@ Experiment = function() {
 		map.update();
 	};
 	this.timerLoop = function() {
+		$("#statusbar").show();
+		for (var i = 0; i < current_dollars.length; i++) {
+			var d = getDistance(controls.getObject().position.x, controls.getObject().position.z, current_dollars[i].position.x, current_dollars[i].position.z);
+			if (d < MINDIST) {
+				$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
+				cash++;
+				scene.remove(current_dollars[i]);
+				current_dollars.splice(i, 1);
+				$(".dollars").text(current_dollars.length);
+				if (current_dollars.length == 0) {
+					$(".dollarvis").hide();
+				}
+				break;
+			}
+		}
+		
 		if (exp_properties.expno == 4 && this.delivered >= objects.length) {
 			var mind = Infinity, minid = -1;
 			for (var i = 0; i < objects.length; i++) {
@@ -805,7 +885,7 @@ Experiment = function() {
 		}*/
 		$("#cashamount").text(cash + " $");
 		var me = this;
-		setTimeout(function() {me.timerLoop()}, 500);
+		setTimeout(function() {me.timerLoop()}, 200);
 	};
 };
 
@@ -816,10 +896,17 @@ var imgsize = 30;
 function showMapOverlay() {
 	var N = objects.length;
 	
+	controls.enabled = false;
+	document.exitPointerLock();
+	
 	$("#blocker").show();
 	$("#instructions_center").hide();
 	$("#mapcanvas").show();
 	$("#mapinstructions").show();
+	$(".task").hide();
+	$("#from").hide();
+	$("#to").hide();
+	$(".drag_task").show();
 	
 	mapcanvasclicked = false;
 	mapcanvasshown = true;

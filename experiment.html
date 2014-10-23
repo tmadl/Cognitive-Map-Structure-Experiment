@@ -11,6 +11,7 @@
   
   <script src="three.min.js"></script>
   <script src="stats.min.js"></script>
+  <script src="SkyShader.js"></script>
   <script src="PointerLockControls.js"></script>
   <script src="MTLLoader.js"></script>
   <script src="OBJMTLLoader.js"></script>
@@ -68,7 +69,7 @@
 			<h3 align="center">Experiment <span class="expno">1</span> / <span class="max_expno">1</span></h2>
 			<h4 align="center">Task <span class="taskno">1</span> / <span class="max_taskno">1</span></h2>
 			<p align="center" id="current_task">
-					<span class="remember_task task">Please remember the positions of the buildings and then press Enter.</span>
+					<span class="remember_task task">Please <span class="dollarvis">collect all <span class="dollars"></span> dollars, </span>memorize the positions of the buildings, and then press Enter.</span>
 				
 					<span class="estimate_task task hidden">Estimate the distance between<br/></span>				<span class="deliver_task task hidden">Pick up package from </span>
 					
@@ -78,11 +79,15 @@
 					
 						<span id="to">Building 2</span>
 						
-					<span class="estimate_task task hidden">:<br/><input id="distance" size="12"/> meters.</span>	<span class="deliver_task task hidden">, memorize<br/>the map and then <span class="pressenter">press Enter</span></span>
+					<span class="estimate_task task hidden">:<br/><input id="distance" size="12"/> meters.</span>	<span class="deliver_task task hidden">, <span class="dollarvis">collect all <span class="dollars"></span> dollars, </span>memorize the map and then <span class="pressenter">press Enter</span></span>
 					
 					<span class="tsp_task task hidden">
-						Deliver packages to all buildings (press E near them), starting with Building <span class="startbuilding"></span>, and then return to Building <span class="startbuilding"></span>, 
+						Please <span class="dollarvis">collect all <span class="dollars"></span> dollars. Then</span> deliver packages to all buildings (press E near them), starting with Building <span class="startbuilding"></span>, and then return to Building <span class="startbuilding"></span>, 
 						using the <b>shortest possible route</b>. Memorize the map and <span class="pressenter">press Enter</span> when done.
+					</span>
+					
+					<span class="drag_task task hidden">
+						Drag the buildings to their positions as you remember them, and then press Enter.
 					</span>
 				</span>
 			</p>
@@ -90,7 +95,7 @@
 				<b><u>Instructions:</u></b>
 				<div id="instructions_exp0" class="hidden itxt"></div>
 				<div id="instructions_exp1" class="hidden itxt">
-					Please find the two buildings in the environment (look around with your mouse), 
+					Please find the two buildings in the environment (walk around with W,A,S,D and look around with your mouse), 
 					<b>memorize their positions</b>, press Enter, and then estimate the distance between them.<br/><br/>
 					Note: all buildings are always 50m high (and 25m wide).
 				</div>

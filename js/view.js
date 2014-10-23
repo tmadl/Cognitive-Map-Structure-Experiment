@@ -233,6 +233,7 @@ function setHouseColor(o, r, g, b) {
 	}*/
 }
 
+var dollars = null;
 function loadHouses() {
 	for (i=0; i<houselabels.length; i++) {
 		// texture
@@ -240,6 +241,28 @@ function loadHouses() {
 		manager.onProgress = function ( item, loaded, total ) {
 			console.log( item, loaded, total );
 		};
+	
+		var loader = new THREE.OBJMTLLoader();
+		var path = modelpath + "Thousand Dollar";
+		loader.load(path+".obj", path+".mtl", function ( object ) {
+			dollars = object;
+			
+			dollars.children[2].material.color.setHex(0xaaffaa);
+			s = 0.05;
+			dollars.scale.set(s, s, s);
+			
+			dollars.position.y = 20;
+			dollars.rotation.x = -1.4;
+			
+			// everything loaded?
+			if (Object.keys(houses).length == houselabels.length && !loaded && dollars != null) {
+				$("#starter").show();
+				$("#loader").hide();
+				loaded = true;
+				init();
+			}
+		}, function(progress) {
+		});
 	
 		// model
 		var loader = new THREE.OBJMTLLoader();
@@ -249,7 +272,7 @@ function loadHouses() {
 				var label = houselabels[i];
 				houses[label] = object;
 				// everything loaded?
-				if (Object.keys(houses).length == houselabels.length) {
+				if (Object.keys(houses).length == houselabels.length && !loaded && dollars != null) {
 					$("#starter").show();
 					$("#loader").hide();
 					loaded = true;
@@ -263,9 +286,14 @@ function loadHouses() {
 			});
 		}(i));
 	}
+	
 }
 
 // pointer lock
+
+document.exitPointerLock = document.exitPointerLock    ||
+                           document.mozExitPointerLock ||
+                           document.webkitExitPointerLock;
 
 var blocker = document.getElementById( 'blocker' );
 var instructions = document.getElementById( 'instructions_center' );
@@ -274,19 +302,21 @@ var havePointerLock = 'pointerLockElement' in document || 'mozPointerLockElement
 if ( havePointerLock ) {
 	var element = document.body;
 	var pointerlockchange = function ( event ) {	
-		if (document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element ) {
-			if (experiment.blocked) instructions.style.display = 'none';
-			else {
-				controls.enabled = true;
-				blocker.style.display = 'none';
-				controls.setDirection( 0, 0, 0 );
+		if (!mapcanvasshown) {
+			if (document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element ) {
+				if (experiment.blocked) instructions.style.display = 'none';
+				else {
+					controls.enabled = true;
+					blocker.style.display = 'none';
+					controls.setDirection( 0, 0, 0 );
+				}
+			} else {
+				controls.enabled = false;
+				blocker.style.display = '-webkit-box';
+				blocker.style.display = '-moz-box';
+				blocker.style.display = 'box';
+				instructions.style.display = '';
 			}
-		} else {
-			controls.enabled = false;
-			blocker.style.display = '-webkit-box';
-			blocker.style.display = '-moz-box';
-			blocker.style.display = 'box';
-			instructions.style.display = '';
 		}
 	};
 	var pointerlockerror = function ( event ) {
