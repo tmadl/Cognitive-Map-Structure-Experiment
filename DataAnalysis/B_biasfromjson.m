@@ -14,6 +14,7 @@ estd=[];
 reald=[];
 worb=[];
 bias=[];
+conditions = [];
 
 for i=1:N
     t = d.(names{i});
@@ -23,6 +24,11 @@ for i=1:N
         estd = [estd e];
         reald = [reald t.real_distances(j)];
         worb = [worb t.distance_estimations(j, 4)];
+        cond = -1;
+        if t.condition
+            cond = t.condition;
+        end;
+        conditions= [conditions cond];
     end;
 end;
 estd_uncorr = estd;
@@ -32,13 +38,13 @@ SSresid = sum((reald-estd).^2);
 SStotal = ((length(reald)-1) * var(reald));
 rsq = 1 - SSresid/SStotal
 
-p=polyfit(estd', reald', 1);
-yfit = estd.*p(1)+p(2);
-
-r_corr = corrcoef(estd, reald)
-SSresid = sum((reald-yfit).^2);
-SStotal = ((length(reald)-1) * var(reald));
-rsq_corr = 1 - SSresid/SStotal
+% p=polyfit(estd', reald', 1);
+% yfit = estd.*p(1)+p(2);
+% 
+% r_corr = corrcoef(estd, reald)
+% SSresid = sum((reald-yfit).^2);
+% SStotal = ((length(reald)-1) * var(reald));
+% rsq_corr = 1 - SSresid/SStotal
 
 %!corrected dist.?? 
 %estd = estd .* p(1) + p(2);

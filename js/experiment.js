@@ -42,7 +42,7 @@ Experiment = function() {
 	
 	var taskNumbersPerExperiment = [-1, 40, 12, 12, 12, 12];
 	var acceptableDistanceError = 20; // percent error acceptable
-	var requiredAcceptableJudgments = 4;
+	var requiredAcceptableJudgments = 5;
 	//var taskNumbersPerExperiment = [-1, 15, 12, 12, 6];
 	
 	var SHOWDISTTASKS = Infinity; //show distance for first 5 tasks
@@ -101,7 +101,25 @@ Experiment = function() {
 			acceptablejudgments++;
 			if (acceptablejudgments >= requiredAcceptableJudgments) {
 				swalert("Good job!", "Your distance estimations are accurate. You can now proceed to experiment 2.\n\nPress Enter to continue", "success");
-				nextExperiment();
+				//nextExperiment();
+				
+				exp_properties.expno = (subject_id % 3) + 2; //  [2 || 3 || 4]
+				
+				$("#instructions_exp"+exp_properties.expno).show();
+				exp_properties.taskno = 0;
+				exp_properties.max_taskno = taskNumbersPerExperiment[exp_properties.expno];
+				
+				// initialize experiment data
+				data["exp"+exp_properties.expno] = {};
+				
+				//permute task numbers randomly
+				var tasks = new Array(taskNumbersPerExperiment[exp_properties.expno]);
+				for (var i=1; i<=taskNumbersPerExperiment[exp_properties.expno]; i++)
+					tasks[i-1]=i;
+				this.permuted_taskno = shuffle(tasks);
+				
+				nextTask();
+				
 				return false;
 			}
 		}
