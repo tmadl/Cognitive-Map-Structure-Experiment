@@ -6,6 +6,7 @@ THREE.PointerLockControls = function ( camera ) {
 
 	//this.default_v = 800;
 	this.default_v = 10000; //10000
+	this.fast_v = 30000;
 	this.v = this.default_v;
 	this.slow_v = 2000;
 	this.default_y = 20;
@@ -67,6 +68,7 @@ THREE.PointerLockControls = function ( camera ) {
 	};
 
 	var onKeyUp = function ( event ) {
+		
 		switch( event.keyCode ) {
 
 			case 38: // up
@@ -120,10 +122,16 @@ THREE.PointerLockControls = function ( camera ) {
 				if ( canJump === true && this.jumpingOn === true ) velocity.y += 350;
 				canJump = false;
 				break;
-
 		}
 
+		if (event.keyCode == 16) {
+			if (scope.v == scope.default_v)
+				scope.v = scope.fast_v;
+			else 
+				scope.v = scope.default_v;
+		}
 	};
+	
 
 	document.addEventListener( 'mousemove', onMouseMove, false );
 	document.addEventListener( 'click', onClick, false );

@@ -6,6 +6,8 @@ allworb = [];
 allexpno = [];
 allcondno = [];
 
+allsubjid = [];
+
 files=dir('logs');
 for i=3:length(files)
     n = files(i).name
@@ -33,6 +35,8 @@ for i=3:length(files)
     allworb=[allworb worb];
     
     allexpno = [allexpno repmat(expno, 1, length(reald))];
+    
+    allsubid = [allexpno repmat(i-3, 1, length(reald))];
     
     if expno == 4 
         % different condition numbers for exp4 - tsp -.- 
