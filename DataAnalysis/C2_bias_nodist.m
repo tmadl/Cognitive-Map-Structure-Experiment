@@ -64,20 +64,19 @@ allcondno(find(allcondno==1 & allexpno == 4)) = 4; % regular condition
 allcondno(find(allcondno==2 & allexpno == 4)) = 1; % distance condition
 allcondno(find(allcondno==3 & allexpno == 4)) = 2; % color condition
 
-% filter = find(allreald > 60);
-% allreald = allreald(filter);
-% allestd = allestd(filter);
-% allworb = allworb(filter);
-% allexpno = allexpno(filter);
-% allcondno = allcondno(filter);
-% allsubjid = allsubjid(filter);
+filter = find(allcondno ~= 1); % exclude distance condition
+allreald = allreald(filter);
+allestd = allestd(filter);
+allworb = allworb(filter);
+allexpno = allexpno(filter);
+allcondno = allcondno(filter);
+allsubjid = allsubjid(filter);
 
 
 
-%allerr=(allestd-allreald);
-allerr=(100./allreald).*allestd;
-%allerr = allestd > allreald;
-[h,p]=ttest(allerr(find(allworb==0)), allerr(find(allworb==1)));
+allerr=(allestd-allreald);
+%allerr=(100./allreald).*allestd;
+[h,p]=ttest2(allerr(find(allworb==0)), allerr(find(allworb==1)));
 within_mean_std = [mean(allerr(find(allworb==0))) std(allerr(find(allworb==0)))];
 across_mean_std = [mean(allerr(find(allworb==1))) std(allerr(find(allworb==1)))];
 disp('all conditions (h, p, within_mean, within_std,    across_mean, across_std)')

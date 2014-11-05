@@ -16,8 +16,6 @@ function init() {
 	experiment.run();
 }
 
-var current_dollars = [];
-
 Experiment = function() {	
 	var map = new Map();
 	var coords; // current building coordinates
@@ -40,14 +38,12 @@ Experiment = function() {
 	var cdistEst = -1;
 	var fromid, toid; //(for delivery or distance est.)
 	
-	var taskNumbersPerExperiment = [-1, 40, 12, 12, 12, 12];
-	var acceptableDistanceError = 20; // percent error acceptable
+	var taskNumbersPerExperiment = [-1, 1, 12, 12, 12, 12];
+	var acceptableDistanceError = 30; // percent error acceptable
 	var requiredAcceptableJudgments = 5;
 	//var taskNumbersPerExperiment = [-1, 15, 12, 12, 6];
 	
 	var SHOWDISTTASKS = Infinity; //show distance for first 5 tasks
-	
-	var MAX_DOLLARS = 10, MIN_DOLLARS = 5;
 
 	var updateProgress = function() {
 		for (key in exp_properties) {
@@ -445,33 +441,6 @@ Experiment = function() {
 				controls.getObject().rotation.y = 7.8 - phi;//3.8; //(Math.PI*2/3 + phi) % (Math.PI*2);
 			}
 			
-			// add some dollars
-			$(".dollarvis").hide();
-			if (exp_properties.expno > 1) {
-				for (var i = 0; i < current_dollars.length; i++) {
-					scene.remove(current_dollars[i]);
-				}
-				current_dollars = [];
-				var n_dollars = (exp_properties.taskno%2) ? MAX_DOLLARS : MIN_DOLLARS;
-				data["exp"+exp_properties.expno]["task"+exp_properties.taskno].n_dollars = n_dollars;
-				farthest_dist *= 1.5;
-				for (var i = 0; i < n_dollars; i++) {
-					var d = dollars.clone();
-					//var x = (centroid[0] + Math.random()*farthest_dist - farthest_dist/2);
-					//var z = (centroid[1] + Math.random()*farthest_dist - farthest_dist/2);
-					var pos = rndNotTooClose(map.building_coords, 
-								function() {return (centroid[0] + Math.random()*farthest_dist - farthest_dist/2);},
-								function() {return (centroid[1] + Math.random()*farthest_dist - farthest_dist/2);}
-							  );
-					d.position.x = pos[0] / DISTSCALE;
-					d.position.z = pos[1] / DISTSCALE;
-					current_dollars.push(d);
-					scene.add(d);
-				}
-				$(".dollarvis").show();
-				$(".dollars").text(n_dollars);
-			}
-			
 			//set up distance estimations
 			cdistEst = 0;
 			distEstAsked = [];
@@ -693,12 +662,7 @@ Experiment = function() {
 				nextTask();
 			}
 		}
-		else if (delivery_game || tsp_game || memorize_task) {
-			if (current_dollars.length > 0) {
-				swalert("Please collect all dollar notes (and memorize the map)!");
-				return false;
-			}
-			
+		else if (delivery_game || tsp_game || memorize_task) {			
 			if (delivery_game && (has_package_from != fromid || delivered_to != toid)) {
 				swalert("Please pick up a package from "+map.labels[fromid]+" and deliver it to "+map.labels[toid]+"! Press enter when finished.");
 			}
@@ -841,23 +805,7 @@ Experiment = function() {
 	this.update = function() {
 		map.update();
 	};
-	this.timerLoop = function() {
-		$("#statusbar").show();
-		for (var i = 0; i < current_dollars.length; i++) {
-			var d = getDistance(controls.getObject().position.x, controls.getObject().position.z, current_dollars[i].position.x, current_dollars[i].position.z);
-			if (d < MINDIST) {
-				$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
-				cash++;
-				scene.remove(current_dollars[i]);
-				current_dollars.splice(i, 1);
-				$(".dollars").text(current_dollars.length);
-				if (current_dollars.length == 0) {
-					$(".dollarvis").hide();
-				}
-				break;
-			}
-		}
-		
+	this.timerLoop = function() {		
 		if (exp_properties.expno == 4 && this.delivered >= objects.length) {
 			var mind = Infinity, minid = -1;
 			for (var i = 0; i < objects.length; i++) {

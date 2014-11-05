@@ -13,8 +13,8 @@ else {
 $filename = "lognewB_".$id.".txt";
 $size = filesize($filename);
 
-if ($size && $size > 6000) {
-	echo substr(md5("Cogmapbatch3"), 0, 10);
+if ($size && $size > 8000) {
+	echo substr(md5("Cogmapbatch4"), 0, 10);
 }
 else {
 	die("");

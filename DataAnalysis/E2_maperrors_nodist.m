@@ -1,6 +1,7 @@
 files=dir('logs');
 Sh = 2; Sw = 3;
 F=0;
+subji = [];
 subjd = [];
 subjreald = [];
 subjdratio = [];
@@ -8,7 +9,7 @@ subjwithin = [];
 subjcond = [];
 subjcorr = [];
 subjexpno = [];
-for i=3:length(files)
+for i=3:length(files)     
     n = files(i).name
     try
         ldata = loadjson(['logs/' n]);
@@ -84,6 +85,7 @@ for i=3:length(files)
             subjwithin = [subjwithin within];
             subjdratio = [subjdratio dratio];
             subjexpno = [subjexpno repmat(expno, 1, length(ds))];
+            subji= [subji repmat(i, 1, length(ds))];
     %         [dd,remTrans,tr] = procrustes(real,remembered);
     %         scatter(real(:,1), real(:,2), 'b');
     %         hold on;
@@ -98,28 +100,31 @@ subjcond(find(subjcond==1 & subjexpno == 4)) = 4; % regular condition
 subjcond(find(subjcond==2 & subjexpno == 4)) = 1; % distance condition
 subjcond(find(subjcond==3 & subjexpno == 4)) = 2; % color condition
 
-% filter = find(subjcond ~= 1); % exclude distance condition
-% subjd = subjd(filter);
-% subjreald = subjreald(filter);
-% subjdratio = subjdratio(filter);
-% subjwithin = subjwithin(filter);
-% subjcond = subjcond(filter);
-% subjexpno = subjexpno(filter);
+filter = find(subjcond ~= 1); % exclude distance condition
+%filter = find(subjexpno == 3); % only exp 3
+subjd = subjd(filter);
+subjreald = subjreald(filter);
+subjdratio = subjdratio(filter);
+subjwithin = subjwithin(filter);
+subjcond = subjcond(filter);
+subjexpno = subjexpno(filter);
 
 w=1;
-scatter(subjreald(find(subjwithin==w)), subjd(find(subjwithin==w)) - subjreald(find(subjwithin==w)))
+scatter(subjreald(find(subjwithin==w)), subjd(find(subjwithin==w)) - subjreald(find(subjwithin==w))); %subji(find(subjwithin==w)), subji(find(subjwithin==w)))
 %scatter(subjd(find(subjwithin==w))./subjdratio(find(subjwithin==w)).*100, subjd(find(subjwithin==w))) % real distance
 hold on;
 w=0;
-scatter(subjreald(find(subjwithin==w)), subjd(find(subjwithin==w)) - subjreald(find(subjwithin==w)), 'r')
+scatter(subjreald(find(subjwithin==w)), subjd(find(subjwithin==w)) - subjreald(find(subjwithin==w)), 'r'); % subji(find(subjwithin==w)), subji(find(subjwithin==w)))
 %scatter(subjd(find(subjwithin==w))./subjdratio(find(subjwithin==w)).*100, subjd(find(subjwithin==w)), 'r') % real distance
 
-err = subjd - subjreald;
 %err = 100./subjreald.*subjd;
+err = subjd - subjreald;
 %err = subjd > subjreald;
 [h,p]=ttest2(err(find(subjwithin==0)), err(find(subjwithin==1)))
 within_errmean = mean(err(find(subjwithin==1)))
 across_errmean = mean(err(find(subjwithin==0)))
+within_errstd = std(err(find(subjwithin==1)));
+across_errstd = std(err(find(subjwithin==0)));
 
 legend('within cluster', 'across cluster')
 xlabel('real distance')
@@ -127,3 +132,8 @@ ylabel('distance error')
 h = lsline;
 set(h(1),'color','b','LineWidth',2)
 set(h(2),'color','r','LineWidth',2)
+
+figure;
+x=-500:500;
+plot(x, normpdf(x, within_errmean, within_errstd));hold on;plot(x, normpdf(x, across_errmean, across_errstd), 'r');
+legend('within cluster', 'across cluster')
