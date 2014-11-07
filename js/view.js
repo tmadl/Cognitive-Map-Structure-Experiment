@@ -193,7 +193,7 @@ function get3DText(str, zOffset, rotate) {
 	if (!rotate) rotate = 0;
 		
 	var text3d = new THREE.TextGeometry( str, {
-		size: 0.7,
+		size: 0.4,
 		height: 0,
 		curveSegments: 2,
 		font: "helvetiker"
@@ -242,28 +242,6 @@ function loadHouses() {
 			console.log( item, loaded, total );
 		};
 	
-		var loader = new THREE.OBJMTLLoader();
-		var path = modelpath + "Thousand Dollar";
-		loader.load(path+".obj", path+".mtl", function ( object ) {
-			dollars = object;
-			
-			dollars.children[2].material.color.setHex(0xaaffaa);
-			s = 0.05;
-			dollars.scale.set(s, s, s);
-			
-			dollars.position.y = 20;
-			dollars.rotation.x = -1.4;
-			
-			// everything loaded?
-			if (Object.keys(houses).length == houselabels.length && !loaded && dollars != null) {
-				$("#starter").show();
-				$("#loader").hide();
-				loaded = true;
-				init();
-			}
-		}, function(progress) {
-		});
-	
 		// model
 		var loader = new THREE.OBJMTLLoader();
 		var path = modelpath+housenames[i];
@@ -272,7 +250,7 @@ function loadHouses() {
 				var label = houselabels[i];
 				houses[label] = object;
 				// everything loaded?
-				if (Object.keys(houses).length == houselabels.length && !loaded && dollars != null) {
+				if (Object.keys(houses).length == houselabels.length && !loaded) {	//} && dollars != null) {
 					$("#starter").show();
 					$("#loader").hide();
 					loaded = true;
@@ -388,8 +366,8 @@ $(document).on("keydown", function (e) {
 		experiment.onEnter();
 	}
 	else if (e.which == 69) {
-		e.preventDefault();
-		event.stopPropagation();
+		//e.preventDefault();
+		//event.stopPropagation();
 		experiment.onUse();
 	}	
 	

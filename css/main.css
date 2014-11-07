@@ -216,6 +216,7 @@ body {
 	width: 600px;
 	margin-left: auto;
 	margin-right: auto;
+	margin-top: 80px;
 	background: #AAAA99;
 	border: 1px solid black;
 	display: none;
@@ -230,4 +231,11 @@ body {
 
 .itxt{
 	font-size: 12px;
+}
+
+
+.recallinp {
+	width: 110px;
+	border: 2px inset #aaaaaa;
+	margin: 3px;
 }

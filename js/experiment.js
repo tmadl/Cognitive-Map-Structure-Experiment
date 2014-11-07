@@ -8,27 +8,41 @@ var serverlogurl = "http://madlnet.net/tsworks/savelog.php"; //takes the log POS
 var getcodeurl = "http://madlnet.net/tsworks/getcode.php";
 var subject_id = -1; 
 
+
+/*
+ * exp1 check distance, color, func. hypotheses - 24 trials (8 / hyp)
+ * exp2 learn importances (Decision boundary) - 24 trials
+ * 
+ * exp3 random map (try to predict) - 6 trials
+ */
+
 //called after models loaded
 function init() {	
 	setupScene();
 
 	experiment = new Experiment();
-	experiment.run();
+	experiment.sendLogToServer();
+	/*setTimeout(function() {
+		if (!experiment.running) {
+			experiment.run();
+		}
+	}, 20000); //!!! min. 10s*/
 }
 
 Experiment = function() {	
+	var scope = this;
 	var map = new Map();
 	var coords; // current building coordinates
 	var fuel = 100, cash = 0, has_package_from = null, delivered_to = null;
 	var MINCASHINCR = 10, MAXCASHINCR = 50;
-	var delivery_game = false, tsp_game = false, memorize_task = false, estimate_task = false;
+	var delivery_game = false, tsp_game = false, memorize_task = false, estimate_task = false, recall_task = false;
 	
 	var data = {};
 	data.DISTSCALE = DISTSCALE;
 	
 	var exp_properties = {};
-	exp_properties.expno = 0; //0
-	exp_properties.max_expno = 4; //5
+	exp_properties.expno = 1; //0
+	exp_properties.max_expno = 3; //5
 	
 	var DISTJUDGMENTS = 4;
 	var distanceEstimation = [-1, -1, -1, -1]; //distance, from, to, type - 0 within, 1 across
@@ -50,80 +64,8 @@ Experiment = function() {
 			$("."+key).text(exp_properties[key]);
 		}
 		$("#distance").val("");
-		$(".expno").text(exp_properties.expno>1?2:1);
+		$(".expno").text(exp_properties.expno); //!!!1
 		$(".max_expno").text(2);
-	};
-	
-	var itext = null;
-	this.exp1task = function() {
-		delivery_game = false;
-		DISTJUDGMENTS = 1;
-		// generate and store map of experiment 1 (two random buildings)
-		map.randomMap(2);
-	};
-	this.exp1judged = function() {
-		$("#blocker").css('background-color', 'rgba(0,0,0,0.5)');
-		this.blocked = false;
-		//check correlation
-		var n = Object.keys(experiment.getData().exp1).length;
-		if (n > 20) {
-			var dist = [], rdist = [];
-			var distsum = 0, distsumsq = 0, rdistsum = 0, rdistsumsq = 0, psum = 0;
-			for (k in data.exp1) {
-				var d = data.exp1[k].distance_estimations[0][0], rd = data.exp1[k].real_distances[0];
-				dist.push(d);
-				rdist.push(rd);
-				distsum += d; distsumsq += Math.pow(d, 2);
-				rdistsum += rd; rdistsumsq += Math.pow(rd, 2);
-				psum += d * rd;
-			}
-			var num = psum - (distsum * rdistsum / n);
-	  		var den = Math.sqrt((distsumsq - Math.pow(distsum, 2) / n) * (rdistsumsq - Math.pow(rdistsum, 2) / n));
-  			var r = num / den;
-  			if (isNaN(r) || r < 0.3) {
-  				alert("Your distance estimations are too inaccurate. Please try harder.");
-  				//location.reload();
-  			}
-  		}
-		
-		//distance judged - next map
-		estimate_task = false;
-		
-		var rd = data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_distances[data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_distances.length - 1];
-		var d = data["exp"+exp_properties.expno]["task"+exp_properties.taskno].distance_estimations[data["exp"+exp_properties.expno]["task"+exp_properties.taskno].distance_estimations.length - 1];
-		d = d[0];
-		var perc = Math.abs(Math.round(100.0/rd*d) - 100);
-		if (perc < acceptableDistanceError) {
-			acceptablejudgments++;
-			if (acceptablejudgments >= requiredAcceptableJudgments) {
-				swalert("Good job!", "Your distance estimations are accurate. You can now proceed to experiment 2.\n\nPress Enter to continue", "success");
-				//nextExperiment();
-				
-				exp_properties.expno = (subject_id % 3) + 2; //  [2 || 3 || 4]
-				
-				$("#instructions_exp"+exp_properties.expno).show();
-				exp_properties.taskno = 0;
-				exp_properties.max_taskno = taskNumbersPerExperiment[exp_properties.expno];
-				
-				// initialize experiment data
-				data["exp"+exp_properties.expno] = {};
-				
-				//permute task numbers randomly
-				var tasks = new Array(taskNumbersPerExperiment[exp_properties.expno]);
-				for (var i=1; i<=taskNumbersPerExperiment[exp_properties.expno]; i++)
-					tasks[i-1]=i;
-				this.permuted_taskno = shuffle(tasks);
-				
-				nextTask();
-				
-				return false;
-			}
-		}
-		else {
-			acceptablejudgments = 0;
-		}
-		
-		nextTask();
 	};
 	
 	var condition;
@@ -172,6 +114,7 @@ Experiment = function() {
 		}
 		else {
 			estimate_task = false;
+			recall_task = false;
 			$("#blocker").css('background-color', 'rgba(0,0,0,0.5)');
 			this.blocked = false;
 
@@ -223,6 +166,7 @@ Experiment = function() {
 		else {
 			$("#blocker").css('background-color', 'rgba(0,0,0,0.5)');
 			this.blocked = false;
+			recall_task = false;
 
 			//nextTask();
 			showMapOverlay();
@@ -274,6 +218,7 @@ Experiment = function() {
 		else {
 			$("#blocker").css('background-color', 'rgba(0,0,0,0.5)');
 			this.blocked = false;
+			recall_task = false;
 
 			//nextTask();
 			showMapOverlay();
@@ -333,7 +278,7 @@ Experiment = function() {
 		else if (tsp_game) {
 			$(".tsp_task").show();
 		}
-		else if (estimate_task) {
+		/*else if (estimate_task) {
 			var fixed_fromid = null;
 			if (exp_properties.expno == 3) 
 				fixed_fromid = objects.length-1; //in exp 3, always ask distance to middle (dec.boundary) building
@@ -349,7 +294,7 @@ Experiment = function() {
 			distanceEstimation = [-1, fromid, toid, distEstTypes[cdistEst]]; //distance, from, to, type	
 			
 			//renderDistance();
-		}
+		}*/
 		else {
 			$(".remember_task").show();
 		}
@@ -364,7 +309,7 @@ Experiment = function() {
 			else 
 				$("#instructions_exp2a").show();
 		}
-		else if (estimate_task) { //distance estimations
+		/*else if (estimate_task) { //distance estimations
 			try {
 				//$("#distance").attr('title', map.getDistance(fromid, toid)); //! //$("#distance").val(""); //!
 			} catch(e) {}
@@ -373,7 +318,7 @@ Experiment = function() {
 			$("#to").text(map.labels[toid]);
 			$("#from").show();
 			$("#to").show();
-		}
+		}*/
 		else if (tsp_game) {
 			$("#from").hide();
 			$("#to").hide();
@@ -404,6 +349,8 @@ Experiment = function() {
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].distance_estimations = [];
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].response_latencies = [];
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_distances = [];
+			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].recall_protocols = [];
+			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].recall_cues = [];
 			updateProgress();
 			
 			//call current experiment task function
@@ -485,19 +432,23 @@ Experiment = function() {
 				nextTask();
 			}
 		}
-		sendLogToServer();
+		scope.sendLogToServer();
 	};
 	
-	var sendLogToServer = function() {
+	this.sendLogToServer = function() {
 		var json_log_data = $.toJSON(data);
 		
 		$.post(serverlogurl, { log: json_log_data, id: subject_id })
 		.done(function(d) {
-		    if (subject_id < 0) 
+		    if (subject_id < 0) {
+		    	if (!d || d < 0) d = 0;
 		  	    subject_id = d;
+		  	    exp_properties.expno = (d%2==1 ? 2 : 1);
+		  	    scope.run();
+		  	}
 		});
 		
-		if (exp_properties.expno > 1 && exp_properties.taskno > taskNumbersPerExperiment[exp_properties.expno]) {
+		if (exp_properties.expno > 0 && exp_properties.taskno > taskNumbersPerExperiment[exp_properties.expno]) {
 			$.post(getcodeurl, { id: subject_id })
 			.done(function(dat) {
 			    if (dat) { 
@@ -538,8 +489,8 @@ Experiment = function() {
 	};
 	
 	var getBuildingPairForDelivery = function() {
-		var ids1 = map.getIdsByFunctionName("supplier");
-		var ids2 = map.getIdsByFunctionName("customer");
+		var ids1 = map.getIdsByFunctionName(supplier_category);
+		var ids2 = map.getIdsByFunctionName(customer_category);
 		var rndid1 = drawRandom(ids1, 1);
 		var rndid2 = drawRandom(ids2, 1);
 		return [rndid1, rndid2];
@@ -608,6 +559,7 @@ Experiment = function() {
 	
 	
 	this.run = function() {
+		this.running = true;
 		this.timerLoop();
 		nextExperiment();
 	};
@@ -622,9 +574,11 @@ Experiment = function() {
 		return map;
 	};
 	 
+	this.recallcueid = null;
+	this.recallcues = [-1, -1, 0, 2, 4];
 	this.onEnter = function() {
 		//participant pressed enter; record distance estimate
-		if (mapcanvasshown) {
+		if (mapcanvasshown && !recall_task) {
 			//record drawn map
 			if (!mapcanvasclicked) {
 				swalert("You made no changes to the map. Please create a map of where you remember the buildings by dragging them into their correct place with your mouse.");
@@ -657,6 +611,8 @@ Experiment = function() {
 				$("#mapinstructions").hide();
 				$("#blocker").hide();
 				$(".drag_task").hide();
+				controls.enabled = true;
+				this.blocked = false;
 				
 				flashCongrats();
 				nextTask();
@@ -673,23 +629,80 @@ Experiment = function() {
 				tsp_game = false;
 				delivery_game = false;
 				memorize_task = false;
-				estimate_task = true;
+				//estimate_task = true;
+				recall_task = true;
+				estimate_task = false;
 				
 				$(".pressenter").css('color', '#ddeeff');
 				has_package_from = null;
 				delivered_to = null;
-				$("#blocker").show();
-				$("#instructions_center").hide();
 				$("#congrats").hide();
-				controls.enabled = false;
-				$("#blocker").css('background-color', 'rgba(150,150,150,1)');
-				this.blocked = true;
+	
+				this.recallcues = shuffle(this.recallcues);
+				this.recallcueid = 0;
+				showRecallOverlay(this.recallcues[this.recallcueid], this.recallcueid++);
 				
 				updateTaskInstruction();
 			}
 		}
 		else {
-			if (!estimate_task) {
+			if (recall_task) {
+				// check if all bldgs recalled, if not, restart task, if yes, ask for next recall. random free and cued recalls
+				var allrecalled = false;
+				var bnames = [], rnames = [], fullrnames = [];
+				for (var i = 0; i < map.labels.length; i++)
+					bnames.push(map.labels[i].trim().split(" ")[0].split("'")[0]);
+				for (var i = 0; i < map.labels.length; i++)
+					rnames.push($("#recalled"+i).val().trim().split(" ")[0].split("'")[0]);
+				if (rnames.length == bnames.length) {
+					var correct = 0;
+					for (var i = 0; i < rnames.length; i++) {
+						for (var j = 0; j < bnames.length; j++) {
+							if (stringDifference(rnames[i], bnames[j]) <= 2) {
+								fullrnames.push(bnames[i]);
+								correct++;
+							}
+						}
+					}
+					rnames = fullrnames;
+					if (correct == bnames.length)
+						allrecalled = true;
+				}
+				
+				lockPointer();
+				mapcanvasshown = false;
+				$("#instructions_center").show();
+				$("#mapcanvas").hide();
+				$("#mapinstructions").hide();
+				$("#blocker").hide();
+				$(".drag_task").hide();
+				controls.enabled = true;
+				this.blocked = false;
+				
+				if (!allrecalled) {
+					swalert("Incorrect recall", "You did not correctly recall all building names. This round will be reset. Please memorize the names of the buildings as well as their positions.");
+					exp_properties.taskno--;
+					nextTask();
+				}
+				else {
+					//recalled; store and cue
+					data["exp"+exp_properties.expno]["task"+exp_properties.taskno].recall_protocols.push(rnames);
+					data["exp"+exp_properties.expno]["task"+exp_properties.taskno].recall_cues.push(this.recallcueid);
+					
+					if (this.recallcueid >= this.recallcues.length) {
+						recall_task = false;
+						// finished recall trials; calculate boundary membership
+						
+						//
+						showMapOverlay();
+					}
+					else {
+						showRecallOverlay(this.recallcues[this.recallcueid], this.recallcueid++);
+					}
+				}
+			}
+			
+			/*if (!estimate_task) {
 				estimate_task = true;
 				
 				$("#blocker").show();
@@ -719,7 +732,7 @@ Experiment = function() {
 					
 					experiment["exp"+exp_properties.expno+"judged"]();
 				}
-			}
+			}*/
 		}
 	};
 	this.onUse = function() {
@@ -738,7 +751,7 @@ Experiment = function() {
 				fuel = 100;
 				$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
 			}
-			else if (func.indexOf("supplier") > -1) { // supplier - get package
+			else if (func.indexOf(supplier_category) > -1) { // supplier - get package
 				has_package_from = minid;
 				$("#package").removeClass("package_empty");
 				$("#package").addClass("package");
@@ -748,7 +761,7 @@ Experiment = function() {
 				objects[minid].children[1].material.color.setHex(0x000000);
 				objects[minid].children[2].material.color.setHex(0x000000);
 			}
-			else if (func.indexOf("customer") > -1 && has_package_from != null) { // customer - deliver package
+			else if (func.indexOf(customer_category) > -1 && has_package_from != null) { // customer - deliver package
 				delivered_to = minid;
 				$("#package").addClass("package_empty");
 				$("#package").removeClass("package");
@@ -873,6 +886,9 @@ function showMapOverlay() {
 	$("#to").hide();
 	$(".drag_task").show();
 	
+	$("#blocker").css('background-color', 'rgba(150,150,150,1)');
+	this.blocked = true;
+	
 	mapcanvasclicked = false;
 	mapcanvasshown = true;
 	
@@ -884,6 +900,9 @@ function showMapOverlay() {
 	
 	$("#mapcanvas").html("");
 	for (var i=0; i < N; i++) {
+		var intcol = experiment.getMap().group_colors[experiment.getMap().cluster_assignments[i]];
+		if (experiment.getMap().cluster_assignments[i] < 0) intcol = experiment.getMap().boundary_color;
+		
 		images.push(
 			$("<img class='buildingimg' />").attr({
 				src: "img/buildingsmall.png",
@@ -891,7 +910,7 @@ function showMapOverlay() {
 				height: imgsize,
 				width: imgsize,
 			}).add($("<div id='blbl_bid"+i+"' class='buildinglbl'>"+experiment.getMap().labels[i]+"</div>"))
-			.add($("<div class='buildingcolor' id='bid"+i+"' style='background:"+intToCol(experiment.getMap().group_colors[experiment.getMap().cluster_assignments[i]])+"'></div>").attr({
+			.add($("<div class='buildingcolor' id='bid"+i+"' style='background:"+intToCol(intcol)+"'></div>").attr({
 				onload: function() {
 					$(this).draggable({ containment: "#mapcanvas" });
 					$(this).mouseup(function() {
@@ -923,53 +942,50 @@ function showMapOverlay() {
 	}
 }
 
+
+
+function showRecallOverlay(id, rno) {
+	var N = objects.length;
+	var map = experiment.getMap();
+	var startBuilding = null;
+	if (id >= 0)
+		startBuilding = map.labels[id];
+	
+	controls.enabled = false;
+	document.exitPointerLock();
+	
+	$("#blocker").show();
+	$("#blocker").css('background-color', 'rgba(150,150,150,1)');
+	$("#instructions_center").hide();
+	$("#mapcanvas").show();
+	$("#mapinstructions").show();
+	$(".task").hide();
+	$("#from").hide();
+	$("#to").hide();
+	$(".drag_task").show();
+	
+	mapcanvasclicked = false;
+	mapcanvasshown = true;
+	
+	$("#mapcanvas").mousedown(function() {
+		mapcanvasclicked = true;
+	});
+	
+	var html = "<p align='center'>";
+	html += ""+(rno+1)+"/"+experiment.recallcues.length+": please recall and enter the names of all buildings you have seen, <br/>";
+	if (startBuilding) html += "starting with <b>"+map.labels[Math.floor(Math.random()*N)]+"</b>";
+	else html += "starting with any building you want";
+	html += ", and then press Enter. ";
+	if (!startBuilding) html += "Please do not start with the same building twice in succession. <br/><small>(The first word of each building name is enough; entering 'house' or 'shop' is optional).</small>";
+	html += "</p><br/>";
+	for (var i=0; i<N; i++) {
+		html += "<input id='recalled"+i+"' class='recallinp'/>";
+	}
+	html += "<span class='clear:both'></span>";
+	
+	$("#mapcanvas").html(html);
+}
+
 ////
 
-function range(start, end) {
-    var foo = [];
-    for (var i = start; i <= end; i++) {
-        foo.push(i);
-    }
-    return foo;
-}
 
-function shuffle(arr) {
-	if (typeof arr == "number") {
-		var a = [];
-		for (var i=0; i<arr; i++) {
-			a.push(i);
-		}		
-		return shuffle(a);
-	}
-	else {
-		return arr.sort(function(a,b) {return Math.random()*2-1;});
-	}
-}
-
-function drawRandom(list, n) {
-	var result = [];
-	for (var i=0; i<n; i++) {
-		do {
-			r = list[Math.floor(Math.random()*list.length)];
-		} while (result.indexOf(r) > -1);
-		result[i] = r;
-	}
-	return result;
-}
-
-
-
-function containsVector(mat, vec) {
-	for (var i = 0; i < mat.length; i++) {
-		if (mat[i].length != vec.length) continue;
-		var c = true;
-		for (var j = 0; j < vec.length; j++) {
-			if (mat[i][j] != vec[j]) {
-				c = false;
-				break;
-			} 
-		}
-		if (c) return true;
-	}
-	return false;
-}

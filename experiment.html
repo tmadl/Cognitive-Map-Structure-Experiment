@@ -37,10 +37,11 @@
 				</div>
 			</div>
 			
+			<div id="mapcanvas"></div>
+			
 			<div id="mapinstructions">
 				<p align="center">Press enter when done</p>
 			</div>
-			<div id="mapcanvas"></div>
 			
 			<div id="congrats" class="hidden">
 				<h1>Task <span class="taskno">1</span> of experiment <span class="expno">1</span> finished!</h1>
@@ -71,11 +72,11 @@
 			<p align="center" id="current_task">
 					<span class="remember_task task">Please <span class="dollarvis"><!--collect all <span class="dollars"></span> dollars, --></span>memorize the positions of the buildings, and then press Enter.</span>
 				
-					<span class="estimate_task task hidden">Estimate the distance between<br/></span>				<span class="deliver_task task hidden">Pick up package from </span>
+					<span class="estimate_task task hidden">Estimate the distance between<br/></span>				<span class="deliver_task task hidden">Pick up package from <br/></span>
 					
 						<span id="from">Building 1</span>
 						
-					<span class="estimate_task task hidden">and </span>												<span class="deliver_task task hidden">,<br/>deliver it to </span>
+					<span class="estimate_task task hidden">and </span>												<span class="deliver_task task hidden">,<br/>deliver it to <br/></span>
 					
 						<span id="to">Building 2</span>
 						
@@ -146,6 +147,7 @@
 		
 		<div id="minimap" class="hidden"></div>
 		
+		<script src="js/utils.js"></script>
 		<script src="js/map.js"></script>
 		<script src="js/experiment.js"></script>
 		<script src="js/view.js"></script>

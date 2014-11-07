@@ -21,14 +21,18 @@ for i=1:N
     M = length(t.real_distances);
     for j=1:M
         e = t.distance_estimations(j, 1);
-        estd = [estd e];
-        reald = [reald t.real_distances(j)];
-        worb = [worb t.distance_estimations(j, 4)];
-        cond = -1;
-        if t.condition
-            cond = t.condition;
-        end;
-        conditions= [conditions cond];
+        r = t.real_distances(j);
+        err = abs(100/r*e-100);
+        %if err < ERRTHRESHOLD
+            estd = [estd e];
+            reald = [reald r];
+            worb = [worb t.distance_estimations(j, 4)];
+            cond = -1;
+            if t.condition
+                cond = t.condition;
+            end;
+            conditions= [conditions cond];
+        %end;
     end;
 end;
 estd_uncorr = estd;
