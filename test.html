@@ -11,7 +11,7 @@
   	<script src="numeric-1.2.6.min.js"></script>
 </head>
 <body>
-	
+	<!--
 <script>
 var permArr = [], usedChars = [];
 function permutations(input) {
@@ -44,11 +44,12 @@ function perms(input) {
 var protocols = [
 ["Sarah","Roger","Barbara","Watch","Tobacco"],
 ["Tobacco","Watch","Barbara","Sarah","Roger"],
-["Watch","Tobacco","Sarah","Barbara","Roger"],
+//["Watch","Tobacco","Sarah","Barbara","Roger"],
 ["Sarah","Barbara","Roger","Tobacco","Watch"],
 ["Barbara","Sarah","Roger","Tobacco","Watch"],
 ["Barbara","Sarah","Roger","Tobacco","Watch"],
-["Roger","Sarah","Barbara","Watch","Tobacco"]];
+//["Roger","Sarah","Barbara","Watch","Tobacco"]
+];
 for (var i=0; i<protocols.length; i++) {
 	document.write($.toJSON(protocols[i])+"<br/>");
 }
@@ -68,7 +69,7 @@ function extractMapStructure(protocols) {
 	var items = protocols[0];
 	var mapstructure = [];
 	
-	for (var tuplelength = items.length; tuplelength >= 2; tuplelength--) {
+	for (var tuplelength = items.length-1; tuplelength >= 2; tuplelength--) {
 		var comb = k_combinations(items, tuplelength);
 		for (var i=0; i < comb.length; i++) {
 			// check if the i'th possible tuple occurs in ALL recall protocols...
@@ -167,6 +168,7 @@ function k_combinations(set, k) {
 }*/
 
 </script>
+	-->
 	
 <script>
 
@@ -310,7 +312,7 @@ function k_combinations(set, k) {
 </script>
 	
 	
-	<!--
+	
 	<script>
 
 function sigmoid(x) {
@@ -322,13 +324,11 @@ function gradientDescent(theta, gradient, alpha) {
     return numeric.sub(theta, numeric.mul(gradient(theta), alpha));
 }
 
-var alpha = 0.0001, lambda = 0;
+var alpha = 0.001, lambda = 0;
 // Initialize theta to zero-vector
 var theta = numeric.rep([3, 1], 0);
-
 // X is feature matrix, y is group vector
 var X = [], y = [];
-
 // Gradient function for logistic regression
 var gradient = function(theta) {
     var H = numeric.dot(X, theta);
@@ -346,10 +346,12 @@ var gradient = function(theta) {
 };
 
 //
-//X=[[1,1,1],[2,2,2],[3,3,3],[1,1,4],[2,2,5],[3,3,6]];
-//y=[[0],[0],[0],[1],[1],[1]];
-X = [[82.8743,0,59.0779],[56.4458,100,49.81],[51.5163,0,84.3632],[69.1019,100,62.344],[17.6944,0,84.2404],[76.2405,0,69.1622],[16.2657,0,4.1852],[66.615,100,34.4728],[90.5283,0,91.0464],[69.1104,0,51.2347],[33.6112,100,75.0505],[63.2833,0,57.65],[61.5848,0,83.8271],[10.8846,0,29.701],[52.8414,0,82.7956]];
-y = [[0],[0],[1],[1],[0],[1],[1],[0],[1],[1],[1],[1],[1],[0],[1]];
+////X=[[1,1,1],[2,2,2],[3,3,3],[1,1,4],[2,2,5],[3,3,6]];
+////y=[[0],[0],[0],[1],[1],[1]];
+//X = [[82.8743,0,59.0779],[56.4458,100,49.81],[51.5163,0,84.3632],[69.1019,100,62.344],[17.6944,0,84.2404],[76.2405,0,69.1622],[16.2657,0,4.1852],[66.615,100,34.4728],[90.5283,0,91.0464],[69.1104,0,51.2347],[33.6112,100,75.0505],[63.2833,0,57.65],[61.5848,0,83.8271],[10.8846,0,29.701],[52.8414,0,82.7956]];
+//y = [[0],[0],[1],[1],[0],[1],[1],[0],[1],[1],[1],[1],[1],[0],[1]];
+X = [[0.42162016136571767,0.18003659788519144,0],[0.20364775727503004,0.20104006845504047,1],[0,0.4830275770276785,1]];
+y = [[0], [0], [0]];
 //
 
 if (X.length) {
@@ -357,9 +359,9 @@ if (X.length) {
         theta = gradientDescent(theta, gradient, alpha);
     }
 }
-alert(theta);
+alert(theta+"\n\n"+(-theta[1]*0.2540529 - theta[2])/theta[0]);
 	
 	</script>
-	-->
+	
 </body>
 </html>

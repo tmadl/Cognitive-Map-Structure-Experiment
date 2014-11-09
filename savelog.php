@@ -19,11 +19,11 @@ else {
 
 echo $id;
 
-$filename = "lognewB_".$id.".txt";
+$filename = "lognewC_".$id.".txt";
 
 $log = $_REQUEST["log"];
 
-if ($log && strlen($log) > 4000)
+if ($log && strlen($log) > 1000)
 {
 	$ip = $_SERVER["REMOTE_ADDR"];
 	$log = $log."\n//ip=".$ip."\n//address=".ip_info("Visitor", "Address");

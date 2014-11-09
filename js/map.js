@@ -8,8 +8,8 @@ var top50names_male = ['JAMES', 'JOHN', 'ROBERT', 'MICHAEL', 'WILLIAM', 'DAVID',
 var top50names_female = ['MARY', 'PATRICIA', 'LINDA', 'BARBARA', 'ELIZABETH', 'JENNIFER', 'MARIA', 'SUSAN', 'MARGARET', 'DOROTHY', 'LISA', 'NANCY', 'KAREN', 'BETTY', 'HELEN', 'SANDRA', 'DONNA', 'CAROL', 'RUTH', 'SHARON', 'MICHELLE', 'LAURA', 'SARAH', 'KIMBERLY', 'DEBORAH', 'JESSICA', 'SHIRLEY', 'CYNTHIA', 'ANGELA', 'MELISSA', 'BRENDA', 'AMY', 'ANNA', 'REBECCA', 'VIRGINIA', 'KATHLEEN', 'PAMELA', 'MARTHA', 'DEBRA', 'AMANDA', 'STEPHANIE', 'CAROLYN', 'CHRISTINE', 'MARIE', 'JANET', 'CATHERINE', 'FRANCES', 'ANN', 'JOYCE', 'DIANE'];
 var names = top50names_male.slice(25).concat(top50names_female.slice(0, 25)).sort(function(a,b) {return Math.random()*2-1;});
 
-//31
-var shoptypes = ['clothes', 'cookie', 'doughnut', 'food', 'music', 'pet', 'grocery', 'bakery', 'barber', 'book', 'tea', 'computer', 'flower', 'gift', 'perfume', 'shoe', 'repair', 'tobacco', 'toy', 'thrift', 'specialty', 'confectionery', 'coffee', 'electronics', 'phone', 'watch', 'cutlery', 'fruit', 'furniture', 'jewelry', 'chocolate', 'print', 'lego', 'wellness', 'whiskey', 'duty-free', 'alcohol'];
+//30
+var shoptypes = ['clothes', 'cookie', 'doughnut', 'food', 'music', 'pet', 'grocery', 'bakery', 'barber', 'book', 'tea', 'computer', 'flower', 'gift', 'perfume', 'shoe', 'repair', 'tobacco', 'toy', 'thrift', 'specialty', 'coffee', 'electronics', 'phone', 'watch', 'cutlery', 'fruit', 'furniture', 'jewelry', 'chocolate', 'print', 'lego', 'wellness', 'whiskey', 'duty-free', 'alcohol'];
 shoptypes = shoptypes.sort(function(a,b) {return Math.random()*2-1;});
 
 var supplier_category = "shop", customer_category = "house";
@@ -60,14 +60,34 @@ Map = function() {
 	};
 	
 	this.randomMap = function(n) {
+		var maxgroups = 3;
+		
 		this.building_coords = [];
+		this.cluster_assignments = [];
+		this.group_colors = rndColors(maxgroups);
+		
+		var fnames = function_name_groups.slice(); //shuffle(function_name_groups.slice());
+		fnames[0] = shuffle(fnames[0]);
+		fnames[1] = shuffle(fnames[1]);
+		function_numbers = [0,0,0];
+		
 		for (var i=0; i<n; i++) {
 			var pos = rndNotTooClose(this.building_coords, function() {return randomDist(DEFAULTDIST*2);});
 			this.building_coords.push([pos[0], pos[1]]);
-			this.cluster_assignments.push(0);
+			
+			clid = Math.round(Math.random()*3);
+			
+			//TODO random map
+			//TODO store all colors, functions, and positions
+			//TODO 12 normal trials, 3 random trials (~30min)
+			//TODO predict rndmap clusterings from feature importances 
+			
+			function_numbers[clid]++;
+			functions.push(fnames[clid][function_numbers[clid]]);
+			colors.push(c);
 		}
 		this.renderMap(this.building_coords);
-		return [this.building_coords, null];
+		return [this.building_coords, null, [colors, functions]];
 	};
 
 	this.decisionboundaryMap = function(features) {
@@ -79,7 +99,7 @@ Map = function() {
 		this.cluster_assignments = [];
 		this.group_colors = rndColors(groups);
 		
-		var fnames = shuffle(function_name_groups.slice());
+		var fnames = function_name_groups.slice(); //shuffle(function_name_groups.slice());
 		fnames[0] = shuffle(fnames[0]);
 		fnames[1] = shuffle(fnames[1]);
 		
@@ -101,21 +121,9 @@ Map = function() {
 		var permuted_id = shuffle(BUILDINGS);
 		
 		var colors = [], functions = [];
-		/*for (var i=0; i<BUILDINGS; i++) {
-			var clid = permuted_id[i]%groups; 
-			var c = this.group_colors[clid];
-			
-			var pos = rndNotTooClose(this.building_coords, function() {return normal_random(mu[clid][0], sigma[clid][0]);}, function() {return normal_random(mu[clid][1], sigma[clid][1]);});
-			this.building_coords.push([pos[0], pos[1]]);
-			this.cluster_assignments.push(clid);
-			
-			function_numbers[clid]++;
-			functions.push(fnames[clid]+" "+function_numbers[clid]);
-			colors.push(c);
-		}*/
 		var dx = mu[0][0] - mu[1][0], dy = mu[0][1] - mu[1][1];
 		var alpha = Math.atan2(dy, dx);
-		var clustersize = randomDist(50, 150); //distance of 2 bldgs in a cluster - between 50 and 150m
+		var clustersize = randomDist(50, 120); //distance of 2 bldgs in a cluster - between 50 and 120m
 		//groups of 2 bldgs
 		for (var clid = 0; clid <= 1; clid ++) {
 			var c = this.group_colors[clid];
@@ -135,7 +143,8 @@ Map = function() {
 		* 0...feature equivalent to cluster 1; 0.5...feature halfway between the two clusters; 1...feature equivalent to cluster 2
 		*/
 		if (!features) {
-			features = [Math.random()*0.6+0.2, Math.random()*0.6+0.2, Math.random()*0.6+0.2]; //random features (min 20% distance from both clusters)
+			//dist col fun
+			features = [Math.random()*0.8+0.1, Math.random()*0.8+0.1, Math.round(Math.random())]; //random features (min 20% distance from both clusters)
 		}
 		var centroid1 = this.getCentroid(this.getIdsByCluster(0)), centroid2 = this.getCentroid(this.getIdsByCluster(1));
 		var dx = centroid2[0] - centroid1[0], dy = centroid2[1] - centroid1[1];

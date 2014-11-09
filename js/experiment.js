@@ -52,10 +52,14 @@ Experiment = function() {
 	var cdistEst = -1;
 	var fromid, toid; //(for delivery or distance est.)
 	
-	var taskNumbersPerExperiment = [-1, 1, 12, 12, 12, 12];
+	var taskNumbersPerExperiment = [-1, 1, 4, 4, 12, 12];
 	var acceptableDistanceError = 30; // percent error acceptable
 	var requiredAcceptableJudgments = 5;
 	//var taskNumbersPerExperiment = [-1, 15, 12, 12, 6];
+	
+	//var MINPATHLENGTH = 2000;
+	
+	var RNDTASKS = Math.round(taskNumbersPerExperiment[3] / 3); //first N/3 tasks random for dec.b. exp
 	
 	var SHOWDISTTASKS = Infinity; //show distance for first 5 tasks
 
@@ -127,33 +131,63 @@ Experiment = function() {
 		DISTJUDGMENTS = 4;
 		
 		delivery_game = false;
-		var RNDTASKS = 5; // first 5 tasks random
 		// generate and store map of experiment 3 (two building clusters and one additional building to determine decision boundary)
-		features = [Math.random()*0.6+0.2, Math.random()*0.6+0.2, Math.random()*0.6+0.2]; //always random
-		/*
-		// additional building: random for the first 3 trials, then use active learning
+		//features = [Math.random()*0.6+0.2, Math.random()*0.6+0.2, Math.random()*0.6+0.2]; //always random
+		
+		// additional building: random for the first max/2 trials, then use active learning
 		if (exp_properties.taskno <= RNDTASKS) {
-			features = [Math.random()*0.6+0.2, Math.random()*0.6+0.2, Math.random()*0.6+0.2];
+			//dist col fun
+			features = [Math.random()*0.7+0.2, Math.random()*0.8+0.1, Math.round(Math.random())];
 		}
 		else {
-			var data = [];
-			var labels = [];
-			for (var j=0; j<exp_properties.taskno; j++) {
-				var biases = getDBBiases(j);
-				var sum = numeric.sum(biases);
-				if (sum == 0 || sum == 4 || biases[0]+biases[1] == biases[2]+biases[3]) { //undecidable cases. oo|oo uu|uu ou|uo 
-				}
-				else {
-					var label = biases[0]+biases[1] < biases[2]+biases[3] ? 0 : 1;
-					labels.push(label);
-					data.push(data["exp"+exp_properties.expno]["task"+j].dbfeatures);
+			// X is feature matrix, y is group vector
+			var X = [];
+			var y = [];
+			//pre-load basic knowledge - at zero distance, same cluster
+			X.push([0, 0, 0]); y.push([0]);
+			X.push([1, 1, 1]); y.push([1]);
+			for (var j=1; j<exp_properties.taskno; j++) {
+				if (data["exp"+exp_properties.expno]["task"+j].dbmembership >= 0) { //only use data points with identifiable cluster memberships
+					X.push(data["exp"+exp_properties.expno]["task"+j].dbfeatures);
+					y.push([data["exp"+exp_properties.expno]["task"+j].dbmembership]);
 				}
 			}
 			features = [0,0,0];
-		}*/
+			
+			var alpha, lambda = 0;
+			// Initialize theta to zero-vector
+			var theta = numeric.rep([3, 1], 0);
+			// Gradient function for logistic regression
+			var gradient = function(theta) {
+			    var H = numeric.dot(X, theta);
+			    for (var i = 0; i < H.length; i++) {
+			        for (var j = 0; j < H[i].length; j++) {
+			            H[i][j] = sigmoid(H[i][j]);
+			        }
+			    }
+			    var regularization = numeric.mul(theta, lambda / X.length);
+			    regularization[0][0] = 0.0;
+			    var grad = numeric.dot(numeric.transpose(X), numeric.sub(H, y));
+			    grad = numeric.div(grad, X.length);
+			    return numeric.add(grad, regularization);
+			};
+			// run logistic regression
+			alpha = 0.1;
+			for (alpha = 0.1; alpha >= 0.0001; alpha/=10) {
+				for (var i = 0; i < 5000; i++) {
+	        		theta = gradientDescent(theta, gradient, alpha);
+	    		}
+    		}
+    		//calculate features
+    		var col = Math.random()*0.8+0.1, fun = Math.round(Math.random());
+    		var d = (-theta[1]*col - theta[2]*fun)/theta[0];
+    		if (d<0) d=0;
+    		if (d>1) d=1;
+    		features = [d, col, fun];
+		}
 		data["exp"+exp_properties.expno]["task"+exp_properties.taskno].dbfeatures = features;
 		// generate map
-		map.decisionboundaryMap();
+		map.decisionboundaryMap(features);
 		delivery_game = true;
 	};
 	this.exp3judged = function() {
@@ -229,25 +263,12 @@ Experiment = function() {
 		delivery_game = false;
 		DISTJUDGMENTS = 0;
 		// generate and store map of experiment 5 (building group)
-		var res = map.groupedMap(1, 0, 0, 3);
-		var coords = res[0];
+		var res = map.randomMap(6);
+		//var coords = res[0];
 	};
 	this.exp5judged = function() {
 		//distance judged - next map
 		nextTask();
-	};
-	
-	var getDBBiases = function(taskno) {
-		var expno = 3; // DB estimated in exp 3
-		var biases_by_map = [[], []];
-		for (var i=0; i<=data["exp"+expno]["task"+taskno].real_distances[i].length; i++) {
-			var type = data["exp"+expno]["task"+taskno].distance_estimations[i][3]; //submap 0 or 1
-			var d = data["exp"+expno]["task"+taskno].distance_estimations[i][0];
-			var rd = data["exp"+expno]["task"+taskno].real_distances[i];
-			var bias = d < rd ? 0 : 1;
-			biases_by_map[type].push(bias);
-		}
-		return biases_by_map[0].concat(biases_by_map[1]);
 	};
 	
 	
@@ -339,16 +360,18 @@ Experiment = function() {
 	this.getPhi = function() {return phi;};
 	
 	var nextTask = function() {
+		if (controls.pathlength > 0) data["exp"+exp_properties.expno]["task"+exp_properties.taskno].pathlength = Math.round(controls.pathlength * DISTSCALE); // in m
+		
 		exp_properties.taskno++;
 		if (exp_properties.taskno <= taskNumbersPerExperiment[exp_properties.expno]) {
+			// reset path length
+			controls.pathlength = 0;
 			//clear map
 			map.clearMap();
 			//clear and initialize task data (real and estimated distances and building ids between which the distance was judged)
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno] = {};
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].condition = "";
-			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].distance_estimations = [];
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].response_latencies = [];
-			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_distances = [];
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].recall_protocols = [];
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].recall_cues = [];
 			updateProgress();
@@ -358,6 +381,7 @@ Experiment = function() {
 			//store map data
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_coords = map.building_coords;
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].cluster_assignments = map.cluster_assignments;
+			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].labels = map.labels;
 			
 			// reset camera to somewhere near the existing buildings (but not within them)
 			var centroid = map.getCentroid(range(0, objects.length-1));
@@ -443,7 +467,7 @@ Experiment = function() {
 		    if (subject_id < 0) {
 		    	if (!d || d < 0) d = 0;
 		  	    subject_id = d;
-		  	    exp_properties.expno = (d%2==1 ? 2 : 1);
+		  	    exp_properties.expno = (d%2==1 ? 1 : 2);
 		  	    scope.run();
 		  	}
 		});
@@ -575,7 +599,7 @@ Experiment = function() {
 	};
 	 
 	this.recallcueid = null;
-	this.recallcues = [-1, -1, 0, 2, 4];
+	this.recallcues = [-1, 0, 1, 2, 3, 4];
 	this.onEnter = function() {
 		//participant pressed enter; record distance estimate
 		if (mapcanvasshown && !recall_task) {
@@ -614,8 +638,10 @@ Experiment = function() {
 				controls.enabled = true;
 				this.blocked = false;
 				
-				flashCongrats();
-				nextTask();
+				recall_task = true;
+				this.recallcues = shuffle(this.recallcues);
+				this.recallcueid = 0;
+				showRecallOverlay(this.recallcues[this.recallcueid], this.recallcueid++);
 			}
 		}
 		else if (delivery_game || tsp_game || memorize_task) {			
@@ -630,17 +656,15 @@ Experiment = function() {
 				delivery_game = false;
 				memorize_task = false;
 				//estimate_task = true;
-				recall_task = true;
+				recall_task = false;
 				estimate_task = false;
 				
 				$(".pressenter").css('color', '#ddeeff');
 				has_package_from = null;
 				delivered_to = null;
 				$("#congrats").hide();
-	
-				this.recallcues = shuffle(this.recallcues);
-				this.recallcueid = 0;
-				showRecallOverlay(this.recallcues[this.recallcueid], this.recallcueid++);
+				
+				showMapOverlay();
 				
 				updateTaskInstruction();
 			}
@@ -649,7 +673,7 @@ Experiment = function() {
 			if (recall_task) {
 				// check if all bldgs recalled, if not, restart task, if yes, ask for next recall. random free and cued recalls
 				var allrecalled = false;
-				var bnames = [], rnames = [], fullrnames = [];
+				var bnames = [], rnames = [];
 				for (var i = 0; i < map.labels.length; i++)
 					bnames.push(map.labels[i].trim().split(" ")[0].split("'")[0]);
 				for (var i = 0; i < map.labels.length; i++)
@@ -659,12 +683,11 @@ Experiment = function() {
 					for (var i = 0; i < rnames.length; i++) {
 						for (var j = 0; j < bnames.length; j++) {
 							if (stringDifference(rnames[i], bnames[j]) <= 2) {
-								fullrnames.push(bnames[i]);
+								rnames[i] = bnames[j];
 								correct++;
 							}
 						}
 					}
-					rnames = fullrnames;
 					if (correct == bnames.length)
 						allrecalled = true;
 				}
@@ -692,48 +715,70 @@ Experiment = function() {
 					if (this.recallcueid >= this.recallcues.length) {
 						recall_task = false;
 						// finished recall trials; calculate boundary membership
+						var protocols = data["exp"+exp_properties.expno]["task"+exp_properties.taskno].recall_protocols;
+						var mapstructure = this.extractMapStructure(protocols);
+						data["exp"+exp_properties.expno]["task"+exp_properties.taskno].mapstructure = mapstructure;
+						var dblabel = map.labels[map.labels.length-1].trim().split(" ")[0].split("'")[0]; 
+						var dbmap = null;
+						for (var i = 0; i < mapstructure.length; i++)
+							if (mapstructure[i].indexOf(dblabel)>-1 && (dbmap == null || mapstructure[i].slice(1).length < dbmap.length && mapstructure[i].slice(1).length > 1)) //find smallest map > 1 with db on it
+								dbmap = mapstructure[i].slice(1);
+						var cluster_membership = -1;
+						if (dbmap != null) {
+							for (var i = 0; i < dbmap.length; i++) {
+								if (dbmap[i] != dblabel) {
+									var c = map.cluster_assignments[searchIndex(map.labels, dbmap[i])];
+									if (cluster_membership < 0) {
+										cluster_membership = c;
+									}
+									else if (cluster_membership != c) {
+										cluster_membership = -1; //mismatch between cluster ids of the buildings in the same cluster as the db building - can't tell membership
+										break;
+									}
+								}
+							}
+						}
+						else {
+							console.log("didnt find correct map for db building - map structure: "+$.toJSON(mapstructure));
+						}
+						data["exp"+exp_properties.expno]["task"+exp_properties.taskno].dbmembership = cluster_membership;
 						
 						//
-						showMapOverlay();
+						flashCongrats();
+						nextTask();
 					}
 					else {
 						showRecallOverlay(this.recallcues[this.recallcueid], this.recallcueid++);
 					}
 				}
 			}
-			
-			/*if (!estimate_task) {
-				estimate_task = true;
-				
-				$("#blocker").show();
-				$("#instructions_center").hide();
-				$("#congrats").hide();
-				controls.enabled = false;
-				$("#blocker").css('background-color', 'rgba(150,150,150,1)');
-				this.blocked = true;
-				
-				updateTaskInstruction();
-			}
-			else {
-				//record distance estimate
-				est = parseInt($("#distance").val());
-				if (isNaN(est)) {
-					swalert("Please enter an estimated distance!\n(Make sure it is a valid number)");
-				}
-				else {
-					// get real distance
-					var reald = map.getDistance(distanceEstimation[1], distanceEstimation[2]);
-					// store estimated and real distance
-					distanceEstimation[0] = est;
-					data["exp"+exp_properties.expno]["task"+exp_properties.taskno].response_latencies.push(new Date() - presentation_time);
-					data["exp"+exp_properties.expno]["task"+exp_properties.taskno].distance_estimations.push(distanceEstimation);
-					data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_distances.push(reald);
-					showDistance(est, reald);
-					
-					experiment["exp"+exp_properties.expno+"judged"]();
-				}
-			}*/
 		}
+	};
+	this.extractMapStructure = function(protocols) {
+		var items = protocols[0];
+		var mapstructure = [];
+		
+		for (var tuplelength = items.length-1; tuplelength >= 2; tuplelength--) {
+			var comb = k_combinations(items, tuplelength);
+			for (var i=0; i < comb.length; i++) {
+				// check if the i'th possible tuple occurs in ALL recall protocols...
+				var perms = permutations(comb[i]), occurs = true;
+				for (var j=0; j < protocols.length && occurs; j++) {
+					occurs = false;
+					for (var k=0; k < perms.length; k++) { //...in at least one permutation
+						if (arrayContains(protocols[j], perms[k])) {
+							occurs = true;
+							break;
+						}
+					}
+				}
+				// if it does occur in all protocols, then this combination is a valid submap
+				if (occurs) {
+					mapstructure.push([items.length-tuplelength-1].concat(comb[i]));
+				}
+			}
+		}
+		return mapstructure;
 	};
 	this.onUse = function() {
 		var mind = Infinity, minid = -1;
@@ -749,14 +794,14 @@ Experiment = function() {
 			if (func.indexOf("gas") > -1 || fuel < 10) { // gas station - fill up
 				cash -= 100 - fuel;
 				fuel = 100;
-				$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
+				//$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
 			}
 			else if (func.indexOf(supplier_category) > -1) { // supplier - get package
 				has_package_from = minid;
 				$("#package").removeClass("package_empty");
 				$("#package").addClass("package");
 				$("#packagetxt").show();
-				$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
+				//$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
 				
 				objects[minid].children[1].material.color.setHex(0x000000);
 				objects[minid].children[2].material.color.setHex(0x000000);
@@ -766,7 +811,7 @@ Experiment = function() {
 				$("#package").addClass("package_empty");
 				$("#package").removeClass("package");
 				$("#packagetxt").hide();
-				$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
+				//$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
 				cash += Math.round(Math.random()*(MAXCASHINCR-MINCASHINCR)) + MINCASHINCR;
 				
 				objects[minid].children[1].material.color.setHex(0x000000);
@@ -776,7 +821,7 @@ Experiment = function() {
 			}
 			else if (tsp_game) {
 				// tsp - deliver package
-				$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
+				//$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
 				cash += MINCASHINCR;
 				objects[minid].children[1].material.color.setHex(0x000000);
 				objects[minid].children[2].material.color.setHex(0x000000);
@@ -818,7 +863,7 @@ Experiment = function() {
 	this.update = function() {
 		map.update();
 	};
-	this.timerLoop = function() {		
+	this.timerLoop = function() {	
 		if (exp_properties.expno == 4 && this.delivered >= objects.length) {
 			var mind = Infinity, minid = -1;
 			for (var i = 0; i < objects.length; i++) {
@@ -862,6 +907,7 @@ Experiment = function() {
 			$("#cashamount").text(cash + " $");
 		}*/
 		$("#cashamount").text(cash + " $");
+		//$("#cashamount").text(Math.round(controls.pathlength * DISTSCALE) + " m");
 		var me = this;
 		setTimeout(function() {me.timerLoop()}, 200);
 	};
@@ -973,10 +1019,11 @@ function showRecallOverlay(id, rno) {
 	
 	var html = "<p align='center'>";
 	html += ""+(rno+1)+"/"+experiment.recallcues.length+": please recall and enter the names of all buildings you have seen, <br/>";
-	if (startBuilding) html += "starting with <b>"+map.labels[Math.floor(Math.random()*N)]+"</b>";
+	if (startBuilding) html += "starting with <b>"+startBuilding+"</b>";
 	else html += "starting with any building you want";
 	html += ", and then press Enter. ";
-	if (!startBuilding) html += "Please do not start with the same building twice in succession. <br/><small>(The first word of each building name is enough; entering 'house' or 'shop' is optional).</small>";
+	if (!startBuilding) html += "Please do not start with the same building twice in succession.";
+	html += "<br/><small>(The first word of each building name is enough; entering 'house' or 'shop' is optional).</small>";
 	html += "</p><br/>";
 	for (var i=0; i<N; i++) {
 		html += "<input id='recalled"+i+"' class='recallinp'/>";
@@ -988,4 +1035,22 @@ function showRecallOverlay(id, rno) {
 
 ////
 
+function matlabExport(arr) {
+	var str = "[";
+	for (var i=0; i<arr.length; i++) {
+		for (var j = 0; j < arr[i].length; j++) {
+			str += arr[i][j];
+			if (j < arr[i].length - 1) str+=",";
+		}
+		str += ";";
+	}
+	str += "]";
+	return str;
+}
 
+function searchIndex(arr, item) {
+	for (var i=0; i<arr.length; i++)
+		if (arr[i].indexOf(item) > -1)
+			return i;
+	return -1;
+}

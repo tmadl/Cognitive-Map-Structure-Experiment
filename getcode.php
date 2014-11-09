@@ -10,11 +10,11 @@ else {
 	die("");
 }
 
-$filename = "lognewB_".$id.".txt";
+$filename = "lognewC_".$id.".txt";
 $size = filesize($filename);
 
 if ($size && $size > 8000) {
-	echo substr(md5("Cogmapbatch4"), 0, 10);
+	echo substr(md5("Cogmapbatch_recall"), 0, 10);
 }
 else {
 	die("");

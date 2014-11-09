@@ -7,7 +7,7 @@
   <script src="jquery.json.min.js"></script>
   <script src="sweet-alert.min.js"></script>
   
-  <!--<script src="numeric-1.2.6.min.js"></script>-->
+  <script src="numeric-1.2.6.min.js"></script>
   
   <script src="three.min.js"></script>
   <script src="stats.min.js"></script>
@@ -52,7 +52,7 @@
 			Congrats!
 		</div>
 		
-		<div id="statusbar" class="deliver_task hidden">
+		<div id="statusbar" class="hidden"> <!-- class="hidden deliver_task" -->
 			<div id="package" class="package_empty"></div>
 			<!--<div class="tank">
 				<span class="float">Fuel level: &nbsp;</span>
@@ -101,7 +101,7 @@
 					Note: all buildings are always 50m high (and 25m wide).
 				</div>
 				<div id="instructions_exp2a" class="hidden itxt">
-					Please memorize the positions of the buildings, and then press enter. 
+					Please memorize the positions and names of all buildings, and then press enter. 
 				</div>
 				<div id="instructions_exp2b" class="hidden itxt">
 					Please deliver at least one package:
@@ -109,7 +109,7 @@
 						<li>Find the <b>Supplier</b> building and press E to pick up a package</li>
 						<li>Find the <b>Customer</b> building and press E to deliver a package</li>
 					</ul>
-					Please also memorize the positions of buildings.<br/>
+					Please also memorize the positions and names of all buildings.<br/>
 					<!--Once you have delivered a package and memorized the positions, press enter.--> 
 				</div>
 				<div id="instructions_exp3" class="hidden itxt">
@@ -118,7 +118,7 @@
 						<li>Find the <b>Supplier</b> building and press E to pick up a package</li>
 						<li>Find the <b>Customer</b> building and press E to deliver a package</li>
 					</ul>
-					Please also memorize the positions of buildings.<br/>
+					Please also memorize the positions and names of all buildings.<br/>
 				</div>
 				<div id="instructions_exp4" class="hidden itxt">
 					Please visit all customers and deliver packages to them, <b>using the shortest path possible</b>, and then return to where you started (Building <span class="startbuilding"></span>).

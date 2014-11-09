@@ -1,3 +1,14 @@
+function sigmoid(x) {
+    return 1.0 / (1.0 + Math.exp(-x));
+
+};
+
+function gradientDescent(theta, gradient, alpha) {
+    return numeric.sub(theta, numeric.mul(gradient(theta), alpha));
+}
+
+
+
 var permArr = [], usedChars = [];
 function permutations(input) {
 	permArr = []; usedChars = [];

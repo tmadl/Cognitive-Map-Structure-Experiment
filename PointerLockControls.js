@@ -11,6 +11,8 @@ THREE.PointerLockControls = function ( camera ) {
 	this.slow_v = 2000;
 	this.default_y = 20;
 	this.jumpingOn = true;
+	
+	this.pathlength = 0;
 
 	var lockMoveForward = false;
 	var lockMoveBackward = false;
@@ -203,9 +205,13 @@ THREE.PointerLockControls = function ( camera ) {
 
 		}
 
+		var x1 = yawObject.position.x, z1 = yawObject.position.z;
 		yawObject.translateX( velocity.x * delta );
 		yawObject.translateY( velocity.y * delta );
 		yawObject.translateZ( velocity.z * delta );
+		var x2 = yawObject.position.x, z2 = yawObject.position.z;
+		
+		scope.pathlength += Math.sqrt(Math.pow(x2-x1, 2)+Math.pow(z2-z1, 2));
 
 		if ( yawObject.position.y < this.default_y ) {
 
