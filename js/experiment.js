@@ -42,7 +42,7 @@ Experiment = function() {
 	
 	var exp_properties = {};
 	exp_properties.expno = 1; //0
-	exp_properties.max_expno = 3; //5
+	exp_properties.max_expno = 5; //5
 	
 	var DISTJUDGMENTS = 4;
 	var distanceEstimation = [-1, -1, -1, -1]; //distance, from, to, type - 0 within, 1 across
@@ -52,7 +52,8 @@ Experiment = function() {
 	var cdistEst = -1;
 	var fromid, toid; //(for delivery or distance est.)
 	
-	var taskNumbersPerExperiment = [-1, 1, 4, 4, 12, 12];
+	var taskNumbersPerExperiment = [-1, -1, 12, 12, -1, 3];
+	//var taskNumbersPerExperiment = [-1, -1, 1, 1, -1, 1];
 	var acceptableDistanceError = 30; // percent error acceptable
 	var requiredAcceptableJudgments = 5;
 	//var taskNumbersPerExperiment = [-1, 15, 12, 12, 6];
@@ -68,7 +69,8 @@ Experiment = function() {
 			$("."+key).text(exp_properties[key]);
 		}
 		$("#distance").val("");
-		$(".expno").text(exp_properties.expno); //!!!1
+		//$(".expno").text(exp_properties.expno); //!!!1
+		$(".expno").text(exp_properties.expno==exp_properties.max_expno?2:1);
 		$(".max_expno").text(2);
 	};
 	
@@ -263,8 +265,9 @@ Experiment = function() {
 		delivery_game = false;
 		DISTJUDGMENTS = 0;
 		// generate and store map of experiment 5 (building group)
-		var res = map.randomMap(6);
+		var res = map.randomMap(5);
 		//var coords = res[0];
+		delivery_game = true;
 	};
 	this.exp5judged = function() {
 		//distance judged - next map
@@ -273,7 +276,7 @@ Experiment = function() {
 	
 	
 	var flashCongrats = function() {
-		swalert("Good job!", "You finished task "+exp_properties.taskno+"!\n"+(taskNumbersPerExperiment[exp_properties.expno]-exp_properties.taskno) + " tasks remain\n\nPress Enter to continue", "success");
+		swalert("Good job!", "You finished task "+exp_properties.taskno+" of experiment "+(exp_properties.expno==exp_properties.max_expno?2:1)+"!\n"+(taskNumbersPerExperiment[exp_properties.expno]-exp_properties.taskno) + " tasks remain in experiment "+(exp_properties.expno==exp_properties.max_expno?2:1)+"\n\nPress Enter to continue", "success");
 		//$("#instructions_center").hide();$("#blocker").show();$("#congrats").show();
 		//setTimeout('$("#instructions_center").show();$("#blocker").hide();$("#congrats").hide();lockPointer();', 2000);
 	};
@@ -360,7 +363,7 @@ Experiment = function() {
 	this.getPhi = function() {return phi;};
 	
 	var nextTask = function() {
-		if (controls.pathlength > 0) data["exp"+exp_properties.expno]["task"+exp_properties.taskno].pathlength = Math.round(controls.pathlength * DISTSCALE); // in m
+		if (controls.pathlength > 0 && data["exp"+exp_properties.expno]["task"+exp_properties.taskno]) data["exp"+exp_properties.expno]["task"+exp_properties.taskno].pathlength = Math.round(controls.pathlength * DISTSCALE); // in m
 		
 		exp_properties.taskno++;
 		if (exp_properties.taskno <= taskNumbersPerExperiment[exp_properties.expno]) {
@@ -380,6 +383,8 @@ Experiment = function() {
 			experiment["exp"+exp_properties.expno+"task"]();
 			//store map data
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_coords = map.building_coords;
+			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_colors = map.building_colors;
+			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_functions = map.building_functions;
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].cluster_assignments = map.cluster_assignments;
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].labels = map.labels;
 			
@@ -434,11 +439,12 @@ Experiment = function() {
 			$("#instructions_exp"+exp_properties.expno+"a").hide();
 			$("#instructions_exp"+exp_properties.expno+"b").hide();
 			
-			if (exp_properties.expno == 1) { // still on exp 1
+			if (exp_properties.expno < exp_properties.max_expno) { // still on exp 2 || 3
 				//show next instructions
 
 				//exp_properties.expno++;
-				exp_properties.expno = (subject_id % 3) + 2; //  [2 || 3 || 4]
+				//exp_properties.expno = (subject_id % 3) + 2; //  [2 || 3 || 4]
+				exp_properties.expno = 5;
 				
 				$("#instructions_exp"+exp_properties.expno).show();
 				exp_properties.taskno = 0;
@@ -467,12 +473,12 @@ Experiment = function() {
 		    if (subject_id < 0) {
 		    	if (!d || d < 0) d = 0;
 		  	    subject_id = d;
-		  	    exp_properties.expno = (d%2==1 ? 1 : 2);
+		  	    exp_properties.expno = (d%2==1 ? 2 : 1);
 		  	    scope.run();
 		  	}
 		});
 		
-		if (exp_properties.expno > 0 && exp_properties.taskno > taskNumbersPerExperiment[exp_properties.expno]) {
+		if (exp_properties.expno == exp_properties.max_expno && exp_properties.taskno > taskNumbersPerExperiment[exp_properties.expno] || exp_properties.expno > exp_properties.max_expno) {
 			$.post(getcodeurl, { id: subject_id })
 			.done(function(dat) {
 			    if (dat) { 
@@ -639,6 +645,8 @@ Experiment = function() {
 				this.blocked = false;
 				
 				recall_task = true;
+				this.recallcues = [-1];
+				for (var i=0; i<map.labels.length; i++) this.recallcues.push(i);
 				this.recallcues = shuffle(this.recallcues);
 				this.recallcueid = 0;
 				showRecallOverlay(this.recallcues[this.recallcueid], this.recallcueid++);
@@ -775,6 +783,16 @@ Experiment = function() {
 				// if it does occur in all protocols, then this combination is a valid submap
 				if (occurs) {
 					mapstructure.push([items.length-tuplelength-1].concat(comb[i]));
+				}
+			}
+		}
+		//if one map contains all elements except one, add that one to its own submap
+		if (mapstructure.length > 0 && mapstructure[0].length == items.length) { //map contains level id plus all items -> its length is number of items + 1
+			var map = mapstructure[0];
+			for (var i=0; i<items.length; i++) {
+				if (map.indexOf(items[i]) < 0) { // item not yet in map
+					mapstructure.push([items.length-2, items[i]]);
+					break;
 				}
 			}
 		}
@@ -946,8 +964,13 @@ function showMapOverlay() {
 	
 	$("#mapcanvas").html("");
 	for (var i=0; i < N; i++) {
-		var intcol = experiment.getMap().group_colors[experiment.getMap().cluster_assignments[i]];
-		if (experiment.getMap().cluster_assignments[i] < 0) intcol = experiment.getMap().boundary_color;
+		if (experiment.getMap().cluster_assignments.length == 0) {
+			var intcol = experiment.getMap().building_colors[i];
+		}
+		else {
+			var intcol = experiment.getMap().group_colors[experiment.getMap().cluster_assignments[i]];
+			if (experiment.getMap().cluster_assignments[i] < 0) intcol = experiment.getMap().boundary_color;
+		}
 		
 		images.push(
 			$("<img class='buildingimg' />").attr({

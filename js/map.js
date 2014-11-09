@@ -23,6 +23,9 @@ Map = function() {
 	this.group_colors = [0xffffff];
 	this.boundary_color = 0xffffff;
 	
+	this.building_colors = [];
+	this.building_functions = [];
+	
 	this.getCentroid = function(ids) {
 		var xs = 0, ys = 0;
 		for (var i = 0; i < ids.length; i++) {
@@ -42,7 +45,7 @@ Map = function() {
 	
 	this.getIdsByFunctionName = function(functionname) {
 		var ids = [];
-		for (var i = 0; i < this.cluster_assignments.length; i++) {
+		for (var i = 0; i < this.labels.length; i++) {
 			if (this.labels[i].toLowerCase().indexOf(functionname.toLowerCase()) > -1)
 				ids.push(i);
 		}
@@ -69,25 +72,29 @@ Map = function() {
 		var fnames = function_name_groups.slice(); //shuffle(function_name_groups.slice());
 		fnames[0] = shuffle(fnames[0]);
 		fnames[1] = shuffle(fnames[1]);
-		function_numbers = [0,0,0];
+		function_numbers = [0,0];
 		
+		var functions = [], colors = [];
 		for (var i=0; i<n; i++) {
-			var pos = rndNotTooClose(this.building_coords, function() {return randomDist(DEFAULTDIST*2);});
+			var pos = rndNotTooClose(this.building_coords, function() {return randomDist(DEFAULTDIST*2);}, null, BUILDINGWIDTH);
 			this.building_coords.push([pos[0], pos[1]]);
 			
-			clid = Math.round(Math.random()*3);
-			
 			//TODO random map
-			//TODO store all colors, functions, and positions
 			//TODO 12 normal trials, 3 random trials (~30min)
 			//TODO predict rndmap clusterings from feature importances 
 			
-			function_numbers[clid]++;
-			functions.push(fnames[clid][function_numbers[clid]]);
-			colors.push(c);
+			if (i<=1) {
+				fid = i; //there must be at least one customer and supplier (for delivery game)
+			}
+			else {
+				fid = Math.floor(Math.random()); // rest random
+			}
+			function_numbers[fid]++;
+			functions.push(fnames[fid][function_numbers[fid]]);
+			colors.push(rndColors(1, 0)[0]);
 		}
-		this.renderMap(this.building_coords);
-		return [this.building_coords, null, [colors, functions]];
+		this.renderMap(this.building_coords, colors, functions);
+		return [this.building_coords, null];
 	};
 
 	this.decisionboundaryMap = function(features) {
@@ -190,7 +197,7 @@ Map = function() {
 			this.group_colors = rndColors(groups);
 		}
 		
-		var fnames = shuffle(function_name_groups.slice());
+		var fnames = function_name_groups.slice();
 		fnames[0] = shuffle(fnames[0]);
 		fnames[1] = shuffle(fnames[1]);
 		
@@ -219,6 +226,8 @@ Map = function() {
 				functions.push(fnames[clid][function_numbers[clid]]);
 			}
 			if (!by_function || by_colors) {
+				function_numbers[0]++;
+				functions.push(fnames[0][function_numbers[0]]);
 				colors.push(c);
 			}
 		}
@@ -256,7 +265,7 @@ Map = function() {
 		if (by_function)
 			for (var i = 0; i < groups; i++) this.group_colors.push(0xffffff);
 		
-		var fnames = shuffle(function_name_groups.slice());
+		var fnames = function_name_groups.slice();
 		fnames[0] = shuffle(fnames[0]);
 		fnames[1] = shuffle(fnames[1]);
 		
@@ -294,8 +303,11 @@ Map = function() {
 				function_numbers[clid]++;
 				functions.push(fnames[clid][function_numbers[clid]]);
 			}
-			else
+			else {
+				function_numbers[0]++;
+				functions.push(fnames[0][function_numbers[0]]);
 				colors.push(c);
+			}
 		}
 		this.renderMap(this.building_coords, colors, functions);
 		
@@ -361,6 +373,9 @@ Map = function() {
 	};
 
 	this.renderMap = function(coords, colors, functions) {
+		this.building_coords = coords;
+		this.building_colors = colors;
+		this.building_functions = functions;
 		for (var i = 0; i < coords.length; i++) {
 			var f = functions&&functions.length>0 ? functions[i] : ("Building "+(i+1));
 			this.labels.push(f);
@@ -582,8 +597,9 @@ var mincoldist = function(rgbs, r, g, b) {
 	return mind;
 };
 
-var rndColors = function(n) {
-	var MINDIST = 150;
+var rndColors = function(n, MINDIST) {
+//	var MINDIST = 150;
+	if (!MINDIST) MINDIST = 150;
 	var rgbs = [];
 	var colors = [];
 	var maxtries = 1000;
