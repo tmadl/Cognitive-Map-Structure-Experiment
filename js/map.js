@@ -130,7 +130,7 @@ Map = function() {
 		var colors = [], functions = [];
 		var dx = mu[0][0] - mu[1][0], dy = mu[0][1] - mu[1][1];
 		var alpha = Math.atan2(dy, dx);
-		var clustersize = randomDist(50, 120); //distance of 2 bldgs in a cluster - between 50 and 120m
+		var clustersize = randomDist(60, 120); //distance of 2 bldgs in a cluster - between 50 and 120m
 		//groups of 2 bldgs
 		for (var clid = 0; clid <= 1; clid ++) {
 			var c = this.group_colors[clid];
@@ -407,7 +407,7 @@ Map = function() {
 		html += "<div id='me' class='dot' style='left:"+c[0]+"px;top:"+c[1]+"px;border:1px solid red;'></div>";
 		$("#minimap").html(html);
 		
-		$("#minimap").show();
+		$("#minimap").hide();
 	};
 	this.renderClusterInMinimap = function(c) {
 		for (var i=0; i<c.length; i++) c[i]/=DISTSCALE;

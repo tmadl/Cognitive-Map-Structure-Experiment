@@ -23,7 +23,7 @@ $filename = "lognewC_".$id.".txt";
 
 $log = $_REQUEST["log"];
 
-if ($log && strlen($log) > 1000)
+if ($log && strlen($log) > 100)
 {
 	$ip = $_SERVER["REMOTE_ADDR"];
 	$log = $log."\n//ip=".$ip."\n//address=".ip_info("Visitor", "Address");

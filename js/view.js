@@ -21,7 +21,10 @@ var camera, scene, renderer, raycaster;
 var geometry, material, mesh;
 var controls;
 
-onerror = function(err) {alert(err);};
+onerror = function(msg, url, line) {
+    alert ("error: " + msg + "\n" + "file: " + url + "\n" + "line: " + line);
+    return true;    // avoid to display an error message in the browser
+};
 
 function setupScene() {
 

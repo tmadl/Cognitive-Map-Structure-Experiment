@@ -54,6 +54,7 @@ Experiment = function() {
 	
 	var taskNumbersPerExperiment = [-1, -1, 12, 12, -1, 3];
 	//var taskNumbersPerExperiment = [-1, -1, 1, 1, -1, 1];
+	//var taskNumbersPerExperiment = [-1, -1, 1, 1, -1, 1];
 	var acceptableDistanceError = 30; // percent error acceptable
 	var requiredAcceptableJudgments = 5;
 	//var taskNumbersPerExperiment = [-1, 15, 12, 12, 6];
@@ -142,50 +143,8 @@ Experiment = function() {
 			features = [Math.random()*0.7+0.2, Math.random()*0.8+0.1, Math.round(Math.random())];
 		}
 		else {
-			// X is feature matrix, y is group vector
-			var X = [];
-			var y = [];
-			//pre-load basic knowledge - at zero distance, same cluster
-			X.push([0, 0, 0]); y.push([0]);
-			X.push([1, 1, 1]); y.push([1]);
-			for (var j=1; j<exp_properties.taskno; j++) {
-				if (data["exp"+exp_properties.expno]["task"+j].dbmembership >= 0) { //only use data points with identifiable cluster memberships
-					X.push(data["exp"+exp_properties.expno]["task"+j].dbfeatures);
-					y.push([data["exp"+exp_properties.expno]["task"+j].dbmembership]);
-				}
-			}
-			features = [0,0,0];
-			
-			var alpha, lambda = 0;
-			// Initialize theta to zero-vector
-			var theta = numeric.rep([3, 1], 0);
-			// Gradient function for logistic regression
-			var gradient = function(theta) {
-			    var H = numeric.dot(X, theta);
-			    for (var i = 0; i < H.length; i++) {
-			        for (var j = 0; j < H[i].length; j++) {
-			            H[i][j] = sigmoid(H[i][j]);
-			        }
-			    }
-			    var regularization = numeric.mul(theta, lambda / X.length);
-			    regularization[0][0] = 0.0;
-			    var grad = numeric.dot(numeric.transpose(X), numeric.sub(H, y));
-			    grad = numeric.div(grad, X.length);
-			    return numeric.add(grad, regularization);
-			};
-			// run logistic regression
-			alpha = 0.1;
-			for (alpha = 0.1; alpha >= 0.0001; alpha/=10) {
-				for (var i = 0; i < 5000; i++) {
-	        		theta = gradientDescent(theta, gradient, alpha);
-	    		}
-    		}
-    		//calculate features
-    		var col = Math.random()*0.8+0.1, fun = Math.round(Math.random());
-    		var d = (-theta[1]*col - theta[2]*fun)/theta[0];
-    		if (d<0) d=0;
-    		if (d>1) d=1;
-    		features = [d, col, fun];
+			ret = this.getDecisionBoundaryFeatures();
+			features = ret[0];
 		}
 		data["exp"+exp_properties.expno]["task"+exp_properties.taskno].dbfeatures = features;
 		// generate map
@@ -207,6 +166,54 @@ Experiment = function() {
 			//nextTask();
 			showMapOverlay();
 		}
+	};
+	
+	this.getDecisionBoundaryFeatures = function() {
+		// X is feature matrix, y is group vector
+		var X = [];
+		var y = [];
+		//pre-load basic knowledge - at zero distance, same cluster
+		X.push([0, 0, 0]); y.push([0]);
+		X.push([1, 1, 1]); y.push([1]);
+		for (var j=1; j<exp_properties.taskno; j++) {
+			if (data["exp"+exp_properties.expno]["task"+j].dbmembership >= 0) { //only use data points with identifiable cluster memberships
+				X.push(data["exp"+exp_properties.expno]["task"+j].dbfeatures);
+				y.push([data["exp"+exp_properties.expno]["task"+j].dbmembership]);
+			}
+		}
+		features = [0,0,0];
+		
+		var alpha, lambda = 0;
+		// Initialize theta to zero-vector
+		var theta = numeric.rep([3, 1], 0);
+		// Gradient function for logistic regression
+		var gradient = function(theta) {
+		    var H = numeric.dot(X, theta);
+		    for (var i = 0; i < H.length; i++) {
+		        for (var j = 0; j < H[i].length; j++) {
+		            H[i][j] = sigmoid(H[i][j]);
+		        }
+		    }
+		    var regularization = numeric.mul(theta, lambda / X.length);
+		    regularization[0][0] = 0.0;
+		    var grad = numeric.dot(numeric.transpose(X), numeric.sub(H, y));
+		    grad = numeric.div(grad, X.length);
+		    return numeric.add(grad, regularization);
+		};
+		// run logistic regression
+		alpha = 0.1;
+		for (alpha = 0.1; alpha >= 0.0001; alpha/=10) {
+			for (var i = 0; i < 5000; i++) {
+        		theta = gradientDescent(theta, gradient, alpha);
+    		}
+		}
+		//calculate features
+		var col = Math.random()*0.8+0.1, fun = Math.round(Math.random());
+		var d = (-theta[1]*col - theta[2]*fun)/theta[0];
+		if (d<0) d=0;
+		if (d>1) d=1;
+		features = [d, col, fun];
+		return [features, theta];
 	};
 	
 	this.exp4task = function() {
@@ -384,7 +391,7 @@ Experiment = function() {
 			//store map data
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_coords = map.building_coords;
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_colors = map.building_colors;
-			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_functions = map.building_functions;
+			//data["exp"+exp_properties.expno]["task"+exp_properties.taskno].real_functions = map.building_functions;
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].cluster_assignments = map.cluster_assignments;
 			data["exp"+exp_properties.expno]["task"+exp_properties.taskno].labels = map.labels;
 			
@@ -440,10 +447,14 @@ Experiment = function() {
 			$("#instructions_exp"+exp_properties.expno+"b").hide();
 			
 			if (exp_properties.expno < exp_properties.max_expno) { // still on exp 2 || 3
+				//store features
+				ret = scope.getDecisionBoundaryFeatures();
+				data["exp"+exp_properties.expno].last_features = ret[1];
+				
 				//show next instructions
 
 				//exp_properties.expno++;
-				//exp_properties.expno = (subject_id % 3) + 2; //  [2 || 3 || 4]
+				//exp_properties.expno = (subject_id % 3) + 2; //  [2 || 3 || 4]				
 				exp_properties.expno = 5;
 				
 				$("#instructions_exp"+exp_properties.expno).show();
@@ -764,6 +775,7 @@ Experiment = function() {
 	};
 	this.extractMapStructure = function(protocols) {
 		var items = protocols[0];
+		var useditems = [];
 		var mapstructure = [];
 		
 		for (var tuplelength = items.length-1; tuplelength >= 2; tuplelength--) {
@@ -783,9 +795,25 @@ Experiment = function() {
 				// if it does occur in all protocols, then this combination is a valid submap
 				if (occurs) {
 					mapstructure.push([items.length-tuplelength-1].concat(comb[i]));
+					for (var j=0; j<comb[i].length; j++) {
+						if (useditems.indexOf(comb[i][j]) < 0)
+							useditems.push(comb[i][j]);
+					}
 				}
 			}
 		}
+		
+		//add unused elements to new submap
+		var submap = [];
+		for (var i=0; i<items.length; i++) {
+			if (useditems.indexOf(items[i]) < 0) {
+				submap.push(items[i]);
+			}
+		}
+		if (submap.length > 0)
+			mapstructure.push(submap);
+		
+		/*
 		//if one map contains all elements except one, add that one to its own submap
 		if (mapstructure.length > 0 && mapstructure[0].length == items.length) { //map contains level id plus all items -> its length is number of items + 1
 			var map = mapstructure[0];
@@ -795,7 +823,8 @@ Experiment = function() {
 					break;
 				}
 			}
-		}
+		}*/
+		
 		return mapstructure;
 	};
 	this.onUse = function() {

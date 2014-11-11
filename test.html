@@ -11,7 +11,7 @@
   	<script src="numeric-1.2.6.min.js"></script>
 </head>
 <body>
-	<!--
+	
 <script>
 var permArr = [], usedChars = [];
 function permutations(input) {
@@ -66,32 +66,59 @@ for (var i=0; i<mapstructure.length; i++) {
 }
 
 function extractMapStructure(protocols) {
-	var items = protocols[0];
-	var mapstructure = [];
-	
-	for (var tuplelength = items.length-1; tuplelength >= 2; tuplelength--) {
-		var comb = k_combinations(items, tuplelength);
-		for (var i=0; i < comb.length; i++) {
-			// check if the i'th possible tuple occurs in ALL recall protocols...
-			var perms = permutations(comb[i]), occurs = true;
-			for (var j=0; j < protocols.length && occurs; j++) {
-				occurs = false;
-				for (var k=0; k < perms.length; k++) { //...in at least one permutation
-					document.title = "tuple "+tuplelength+", i="+i+" / "+comb.length+", k="+k+" / "+perms.length;
-					if (arrayContains(protocols[j], perms[k])) {
-						occurs = true;
-						break;
+		var items = protocols[0];
+		var useditems = [];
+		var mapstructure = [];
+		
+		for (var tuplelength = items.length-1; tuplelength >= 2; tuplelength--) {
+			var comb = k_combinations(items, tuplelength);
+			for (var i=0; i < comb.length; i++) {
+				// check if the i'th possible tuple occurs in ALL recall protocols...
+				var perms = permutations(comb[i]), occurs = true;
+				for (var j=0; j < protocols.length && occurs; j++) {
+					occurs = false;
+					for (var k=0; k < perms.length; k++) { //...in at least one permutation
+						if (arrayContains(protocols[j], perms[k])) {
+							occurs = true;
+							break;
+						}
+					}
+				}
+				// if it does occur in all protocols, then this combination is a valid submap
+				if (occurs) {
+					mapstructure.push([items.length-tuplelength-1].concat(comb[i]));
+					for (var j=0; j<comb[i].length; j++) {
+						if (useditems.indexOf(comb[i][j]) < 0)
+							useditems.push(comb[i][j]);
 					}
 				}
 			}
-			// if it does occur in all protocols, then this combination is a valid submap
-			if (occurs) {
-				mapstructure.push([items.length-tuplelength-1].concat(comb[i]));
+		}
+		
+		//add unused elements to new submap
+		var submap = [];
+		for (var i=0; i<items.length; i++) {
+			if (useditems.indexOf(items[i]) < 0) {
+				submap.push(items[i]);
 			}
 		}
-	}
-	return mapstructure;
-}
+		if (submap.length > 0)
+			mapstructure.push(submap);
+		
+		/*
+		//if one map contains all elements except one, add that one to its own submap
+		if (mapstructure.length > 0 && mapstructure[0].length == items.length) { //map contains level id plus all items -> its length is number of items + 1
+			var map = mapstructure[0];
+			for (var i=0; i<items.length; i++) {
+				if (map.indexOf(items[i]) < 0) { // item not yet in map
+					mapstructure.push([items.length-2, items[i]]);
+					break;
+				}
+			}
+		}*/
+		
+		return mapstructure;
+	};
 
 function arrayContains(arr1, arr2) {
 	for (var i = 0; i < arr1.length - arr2.length + 1; i++) {
@@ -168,7 +195,7 @@ function k_combinations(set, k) {
 }*/
 
 </script>
-	-->
+
 	
 <script>
 
@@ -312,7 +339,7 @@ function k_combinations(set, k) {
 </script>
 	
 	
-	
+	<!--
 	<script>
 
 function sigmoid(x) {
@@ -361,7 +388,7 @@ if (X.length) {
 }
 alert(theta+"\n\n"+(-theta[1]*0.2540529 - theta[2])/theta[0]);
 	
-	</script>
+	</script>-->
 	
 </body>
 </html>
