@@ -173,11 +173,14 @@ Experiment = function() {
 		var X = [];
 		var y = [];
 		//pre-load basic knowledge - at zero distance, same cluster
-		X.push([0, 0, 0]); y.push([0]);
-		X.push([1, 1, 1]); y.push([1]);
+						//bias
+		X.push([0, 0, 0,   1]); y.push([0]);
+		X.push([1, 1, 1,   1]); y.push([1]);
 		for (var j=1; j<exp_properties.taskno; j++) {
-			if (data["exp"+exp_properties.expno]["task"+j].dbmembership >= 0) { //only use data points with identifiable cluster memberships
-				X.push(data["exp"+exp_properties.expno]["task"+j].dbfeatures);
+			if (data["exp"+exp_properties.expno]["task"+j].dbmembership >= 0 && data["exp"+exp_properties.expno]["task"+j].dbfeatures) { //only use data points with identifiable cluster memberships
+				var x = data["exp"+exp_properties.expno]["task"+j].dbfeatures;
+				x.push(1); //bias
+				X.push(x);
 				y.push([data["exp"+exp_properties.expno]["task"+j].dbmembership]);
 			}
 		}
@@ -185,7 +188,7 @@ Experiment = function() {
 		
 		var alpha, lambda = 0;
 		// Initialize theta to zero-vector
-		var theta = numeric.rep([3, 1], 0);
+		var theta = numeric.rep([4, 1], 0);
 		// Gradient function for logistic regression
 		var gradient = function(theta) {
 		    var H = numeric.dot(X, theta);
@@ -209,7 +212,7 @@ Experiment = function() {
 		}
 		//calculate features
 		var col = Math.random()*0.8+0.1, fun = Math.round(Math.random());
-		var d = (-theta[1]*col - theta[2]*fun)/theta[0];
+		var d = (-theta[1]*col - theta[2]*fun - theta[3])/theta[0];
 		if (d<0) d=0;
 		if (d>1) d=1;
 		features = [d, col, fun];
