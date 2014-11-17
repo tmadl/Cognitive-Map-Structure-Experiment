@@ -52,7 +52,7 @@ Experiment = function() {
 	var cdistEst = -1;
 	var fromid, toid; //(for delivery or distance est.)
 	
-	var taskNumbersPerExperiment = [-1, -1, 12, 12, -1, 3];
+	var taskNumbersPerExperiment = [-1, -1, 14, 14, -1, 3];
 	//var taskNumbersPerExperiment = [-1, -1, 1, 1, -1, 1];
 	//var taskNumbersPerExperiment = [-1, -1, 1, 1, -1, 1];
 	var acceptableDistanceError = 30; // percent error acceptable
@@ -487,7 +487,8 @@ Experiment = function() {
 		    if (subject_id < 0) {
 		    	if (!d || d < 0) d = 0;
 		  	    subject_id = d;
-		  	    exp_properties.expno = (d%2==1 ? 2 : 1);
+		  	    //exp_properties.expno = (d%2==1 ? 2 : 1);
+		  	    exp_properties.expno = 2; // always exp 3
 		  	    scope.run();
 		  	}
 		});
@@ -619,7 +620,7 @@ Experiment = function() {
 	};
 	 
 	this.recallcueid = null;
-	this.recallcues = [-1, 0, 1, 2, 3, 4];
+	this.recallcues = [0, 1, 2, 3, 4];
 	this.onEnter = function() {
 		//participant pressed enter; record distance estimate
 		if (mapcanvasshown && !recall_task) {
@@ -659,7 +660,8 @@ Experiment = function() {
 				this.blocked = false;
 				
 				recall_task = true;
-				this.recallcues = [-1];
+				//this.recallcues = [-1];
+				this.recallcues = [];
 				for (var i=0; i<map.labels.length; i++) this.recallcues.push(i);
 				this.recallcues = shuffle(this.recallcues);
 				this.recallcueid = 0;
