@@ -105,7 +105,7 @@ for c=1:4
     [h,p]=ttest2(allrt(find(allworb==0 & allcondno == c)), allrt(find(allworb==1 & allcondno == c)));
     within_mean_std = [mean(allrt(find(allworb==0 & allcondno == c))) std(allrt(find(allworb==0 & allcondno == c)))];
     across_mean_std = [mean(allrt(find(allworb==1 & allcondno == c))) std(allrt(find(allworb==1 & allcondno == c)))];
-    [h,p,within_mean_std,across_mean_std]
+    [h,p,within_mean_std/1000,across_mean_std/1000]
 end;
 
 figure;

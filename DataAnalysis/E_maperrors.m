@@ -6,8 +6,9 @@ subjreald = [];
 subjdratio = [];
 subjwithin = [];
 subjcond = [];
-subjcorr = [];
+%subjcorr = [];
 subjexpno = [];
+subjid = [];
 for i=3:length(files)
     n = files(i).name
     try
@@ -18,15 +19,15 @@ for i=3:length(files)
         err
     end;
     
-    d=ldata.exp1;
-    A_distfromjson;
-    if length(r) > 1
-        r = r(2,1);
-    end;
-    subjcorr = [subjcorr r];
+    %d=ldata.exp1;
+    %A_distfromjson;
+    %if length(r) > 1
+    %    r = r(2,1);
+    %end;
+    %subjcorr = [subjcorr r];
     
     f = fieldnames(ldata);
-    exp = f(3);
+    exp = f(2);
     exp = exp{1};
     expno = str2num(exp(length(exp)));
     d=ldata.(exp);
@@ -49,8 +50,8 @@ for i=3:length(files)
                 remembered(r, :) = [x y];
             end;
             
-            %[dd,remTrans,tr] = procrustes(real,remembered);
-            %remembered = remTrans;
+            [dd,remTrans,tr] = procrustes(real,remembered);
+            remembered = remTrans;
             
             %t.cluster_assignments
             allpairs = nchoosek(1:length(t.cluster_assignments), 2);
@@ -85,6 +86,7 @@ for i=3:length(files)
             subjwithin = [subjwithin within];
             subjdratio = [subjdratio dratio];
             subjexpno = [subjexpno repmat(expno, 1, length(ds))];
+            subjid = [subjid repmat(i, 1, length(ds))];
     %         [dd,remTrans,tr] = procrustes(real,remembered);
     %         scatter(real(:,1), real(:,2), 'b');
     %         hold on;
@@ -100,12 +102,12 @@ subjcond(find(subjcond==2 & subjexpno == 4)) = 1; % distance condition
 subjcond(find(subjcond==3 & subjexpno == 4)) = 2; % color condition
 
 % filter = find(subjcond ~= 1); % exclude distance condition
-% subjd = subjd(filter);
-% subjreald = subjreald(filter);
-% subjdratio = subjdratio(filter);
-% subjwithin = subjwithin(filter);
-% subjcond = subjcond(filter);
-% subjexpno = subjexpno(filter);
+%  subjd = subjd(filter);
+%  subjreald = subjreald(filter);
+%  subjdratio = subjdratio(filter);
+%  subjwithin = subjwithin(filter);
+%  subjcond = subjcond(filter);
+%  subjexpno = subjexpno(filter);
 
 w=1;
 scatter(subjreald(find(subjwithin==w)), subjd(find(subjwithin==w)) - subjreald(find(subjwithin==w)))

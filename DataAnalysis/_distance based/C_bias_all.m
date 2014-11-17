@@ -74,8 +74,8 @@ allcondno(find(allcondno==3 & allexpno == 4)) = 2; % color condition
 
 
 
-%allerr=(allestd-allreald);
-allerr=(100./allreald).*allestd;
+allerr=(allestd-allreald);
+%allerr=(100./allreald).*allestd;
 %allerr = allestd > allreald;
 [h,p]=ttest(allerr(find(allworb==0)), allerr(find(allworb==1)));
 within_mean_std = [mean(allerr(find(allworb==0))) std(allerr(find(allworb==0)))];

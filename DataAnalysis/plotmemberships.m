@@ -1,3 +1,4 @@
+%ldata = loadjson(['logs/lognewC_59.txt']);d=ldata.exp3
 names=fieldnames(d);
 N=length(names);
 
