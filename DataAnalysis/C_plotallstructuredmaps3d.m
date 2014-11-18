@@ -2,8 +2,8 @@
 %d=ldata.exp5
 
 %if ~exist('expno') || ~exist('structuredmapsno') || strcmp(expno, 'exp2')
-    %expno = 'exp3';
-    expno = 'exp5';
+    expno = 'exp3';
+    %expno = 'exp5';
     getstructuredmaps;
 %end;
 
