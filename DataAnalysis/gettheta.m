@@ -35,23 +35,36 @@ end;
 datapoints = 0;
 loo_error = Inf;
 idx = find(classes~=-1);
+    n=4;
+theta = zeros(n, 1);
 if size(coords(idx, :), 1) > 1
-    n=3;
-    initial_theta = zeros(n+1, 1);%zeros(n, 1);
+
     %coords2 = [coords ones(size(coords,1), 1)];
     %coords2(:, 3) = coords2(:, 3) + 1;
     
     datapoints = length(idx);
-    %options = optimset('Display', 'off', 'GradObj', 'on', 'maxIter', 1000);
-    %[theta] = fmincg (@(t)(logregCostFunction(t, coords2(idx, :), classes(idx))), initial_theta, options);
-    theta = mnrfit(coords(idx, :), classes(idx)+1);
-    theta = [theta(2:4) ; theta(1)];
-    %d.last_features
     
-    loo_error = getLooError(coords(idx, :), classes(idx)+1);
-
-    col=0; fun=1;
-    dist = (-theta(2)*col - theta(3)*fun)/theta(1);
+%     initial_theta = zeros(n+1, 1);%zeros(n, 1);
+%     %options = optimset('Display', 'off', 'GradObj', 'on', 'maxIter', 1000);
+%     %[theta] = fmincg (@(t)(logregCostFunction(t, coords2(idx, :), classes(idx))), initial_theta, options);
+     
+%       disp('kmeansthetacostfunction')
+%       initial_theta = zeros(n, 1);
+%       options = optimset('Display', 'off', 'GradObj', 'on', 'maxIter', 100);
+%       [theta] = fminsearch (@(t)(kmeansthetacostfunction(t, d)), initial_theta, options);
+   
+%     model=svm('-t 0');
+%     model = model.train(coords(idx, :), classes(idx, :));
+%     theta = [];
+%     if ~isempty(model.wrappedModel.rho) && ~isempty(model.wrappedModel.sv_coef) && ~isempty(model.wrappedModel.SVs)
+%        theta = [model.wrappedModel.rho model.wrappedModel.sv_coef'*model.wrappedModel.SVs]';
+%        theta = [theta(2:4) ; theta(1)]; %!
+%     end;
+ 
+    theta = mnrfit(coords(idx, :), classes(idx)+1); %!
+    theta = [theta(2:4) ; theta(1)]; %!
+    
+        %loo_error = getLooError(coords(idx, :), classes(idx)+1);
 
     if doplot
         plot3(0, 0, 0, ['ko'], 'MarkerEdgeColor', 'k', 'LineWidth', 5);
@@ -67,5 +80,5 @@ if size(coords(idx, :), 1) > 1
     end;
 end;
 
-d.last_features
-theta
+%d.last_features;
+%theta;

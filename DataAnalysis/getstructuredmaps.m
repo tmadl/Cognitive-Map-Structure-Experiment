@@ -7,6 +7,7 @@ structuredmapsno = 0;
 structuredmaps = {};
 alllabels = {};
 allcoords = {};
+allsketchmaps = {};
 allcols = {};
 allthetas = {};
 alljsthetas = {};
@@ -18,7 +19,8 @@ unstructuredconditions = {};
 unstructuredmapsno = 0;
 doplot = 0;
 z=0;
-for fi=3:length(files)
+for fi=3:length(files) %3
+    disp([num2str(fi) ' / ' num2str(length(files))])
     n = files(fi).name;
     try
         ldata = loadjson(['logs/' n]);
@@ -29,6 +31,7 @@ for fi=3:length(files)
     end;
     if isfield(ldata, expno)
         d=ldata.(expno);
+        
         names=fieldnames(d);
         N=length(names);
         structured = 0;
@@ -42,10 +45,14 @@ for fi=3:length(files)
                     %for k=1:numel(t.mapstructure)
                         structuredmapsno = structuredmapsno + 1;
 
-                        structuredmaps{structuredmapsno} = t.mapstructure;
+                        %%structuredmaps{structuredmapsno} = t.mapstructure;
+                        structuredmaps{structuredmapsno} = extractMapStructure(t.recall_protocols); disp('custom mapstructure extraction');
+                        
                         alllabels{structuredmapsno} = t.labels;
                         allcoords{structuredmapsno} = t.real_coords;
                         allcols{structuredmapsno} = t.real_colors;
+                        
+                        allsketchmaps{structuredmapsno} = [strarr2numarr(t.rememberedX)' strarr2numarr(t.rememberedY)'];
                         
                         allcassignments{structuredmapsno} = t.cluster_assignments;
                         allconditions{structuredmapsno} = t.condition;
@@ -85,24 +92,24 @@ for fi=3:length(files)
 end;
 
 % filter out all subjects not having structured more than 75% of the maps
-threshold = 0.75*12;
+%threshold = 0.75*12;
 %threshold = 0.5*12;
-%threshold = -1;
-
-idx = find(allthetadatapoints > threshold);
-structuredmaps = structuredmaps(idx);
-alllabels = alllabels(idx);
-allcoords = allcoords(idx);
-allcols = allcols(idx);
-allthetas = allthetas(idx);
-alljsthetas = alljsthetas(idx);
-allthetadatapoints = allthetadatapoints(idx);
-allcassignments = allcassignments(idx);
-allconditions = allconditions(idx);
-alllooerrors = alllooerrors(idx);
-
-excluded = structuredmapsno - length(structuredmaps)
-structuredmapsno = length(structuredmaps);
+% threshold = -1;
+% 
+% idx = find(allthetadatapoints > threshold);
+% structuredmaps = structuredmaps(idx);
+% alllabels = alllabels(idx);
+% allcoords = allcoords(idx);
+% allcols = allcols(idx);
+% allthetas = allthetas(idx);
+% alljsthetas = alljsthetas(idx);
+% allthetadatapoints = allthetadatapoints(idx);
+% allcassignments = allcassignments(idx);
+% allconditions = allconditions(idx);
+% alllooerrors = alllooerrors(idx);
+% 
+% excluded = structuredmapsno - length(structuredmaps)
+% structuredmapsno = length(structuredmaps);
 
 
 structuredmapsno

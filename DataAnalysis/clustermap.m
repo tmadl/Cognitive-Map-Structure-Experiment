@@ -13,12 +13,14 @@ for f=1:length(labels)
 end;
 
 data = [coords/500 colors'/(256^3) functions'];
-%data = coords/500;
-if length(theta)>1 && sum(isnan(theta)) == 0 %&& false
+%data = [coords/500 ones(length(coords), 1) functions'];  disp('color feature ignored');
+%data = coords/500; disp('dist only, no other features');
+if length(theta)>1 && sum(isnan(theta)) == 0 && theta(1) ~= 0 %&& false
     fweights = theta(1:3) ./ theta(1); %ignore bias (theta(4))
     %fweights = metatheta(1:3); %ignore bias (theta(4))
 else
     fweights = [1 1 1]';
+    disp('feature weights ignored');
 end;
 
 fweights = [fweights(1) ; fweights]; % theta(1) for both x and y coords
@@ -66,7 +68,5 @@ cluster_memberships = kmeans(data2, cluster_number);
 %cluster_memberships=emgm(D',2);
 %cluster_memberships=emgm(data',2);
 
-
-cluster_memberships
 
 %title([num2str(fweights(1)) ' ' num2str(fweights(2)) ' ' num2str(fweights(3))])

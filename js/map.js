@@ -4,12 +4,14 @@ var MAXGROUPSIZE = 500, MINGROUPSIZE = 300, MINGROUPDIST = 300;
 var function_names = ["Customer", "Supplier", "Gas Station"];
 
 //http://names.mongabay.com/male_names.htm
-var top50names_male = ['JAMES', 'JOHN', 'ROBERT', 'MICHAEL', 'WILLIAM', 'DAVID', 'RICHARD', 'CHARLES', 'JOSEPH', 'THOMAS', 'CHRISTOPHER', 'DANIEL', 'PAUL', 'MARK', 'DONALD', 'GEORGE', 'KENNETH', 'STEVEN', 'EDWARD', 'BRIAN', 'RONALD', 'ANTHONY', 'KEVIN', 'JASON', 'MATTHEW', 'GARY', 'TIMOTHY', 'JOSE', 'LARRY', 'JEFFREY', 'FRANK', 'SCOTT', 'ERIC', 'STEPHEN', 'ANDREW', 'RAYMOND', 'GREGORY', 'JOSHUA', 'JERRY', 'DENNIS', 'WALTER', 'PATRICK', 'PETER', 'HAROLD', 'DOUGLAS', 'HENRY', 'CARL', 'ARTHUR', 'RYAN', 'ROGER'];
-var top50names_female = ['MARY', 'PATRICIA', 'LINDA', 'BARBARA', 'ELIZABETH', 'JENNIFER', 'MARIA', 'SUSAN', 'MARGARET', 'DOROTHY', 'LISA', 'NANCY', 'KAREN', 'BETTY', 'HELEN', 'SANDRA', 'DONNA', 'CAROL', 'RUTH', 'SHARON', 'MICHELLE', 'LAURA', 'SARAH', 'KIMBERLY', 'DEBORAH', 'JESSICA', 'SHIRLEY', 'CYNTHIA', 'ANGELA', 'MELISSA', 'BRENDA', 'AMY', 'ANNA', 'REBECCA', 'VIRGINIA', 'KATHLEEN', 'PAMELA', 'MARTHA', 'DEBRA', 'AMANDA', 'STEPHANIE', 'CAROLYN', 'CHRISTINE', 'MARIE', 'JANET', 'CATHERINE', 'FRANCES', 'ANN', 'JOYCE', 'DIANE'];
+//var top50names_male = ['JAMES', 'JOHN', 'ROBERT', 'MICHAEL', 'WILLIAM', 'DAVID', 'RICHARD', 'CHARLES', 'JOSEPH', 'THOMAS', 'DANIEL', 'PAUL', 'MARK', 'DONALD', 'GEORGE', 'KEN', 'STEVEN', 'EDWARD', 'BRIAN', 'RONALD', 'ANTHONY', 'KEVIN', 'JASON', 'MATTHEW', 'GARY', 'TIM', 'JOSE', 'LARRY', 'JEFFREY', 'FRANK', 'SCOTT', 'ERIC', 'STEPHEN', 'ANDREW', 'RAYMOND', 'GREG', 'JERRY', 'DENNIS', 'WALTER', 'PATRICK', 'PETER', 'HARRY', 'DOUGLAS', 'HENRY', 'CARL', 'ARTHUR', 'RYAN', 'ROGER'];
+var top50names_male = ["TOM", "JAMES", "JOHN", "DAVID", "PAUL", "MARK", "KEN", "BRIAN", "KEVIN", "JASON", "GARY", "TIM", "JOSE", "LARRY", "FRANK", "SCOTT", "ERIC", "GREG", "JERRY", "PETER", "HARRY", "HENRY", "CARL", "RYAN", "ROGER"];
+//var top50names_female = ['MARY', 'PATRICIA', 'LINDA', 'LISA', 'JENNIFER', 'MARY', 'SUSAN', 'MARGARET', 'DOROTHY', 'LISA', 'NANCY', 'BETTY', 'HELEN', 'SANDRA', 'DONNA', 'CAROL', 'RUTH', 'SHARON', 'MICHELLE', 'LAURA', 'SARAH', 'KIM', 'DEBORAH', 'JESSICA', 'ANGELA', 'MELISSA', 'BRENDA', 'AMY', 'ANNA', 'REBECCA', 'VIRGINIA', 'KATHY', 'PAMELA', 'MARTHA', 'STEPHANIE', 'CHRISTINE', 'JANET', 'FRANCES', 'DIANE'];
+var top50names_female = ["MARY", "LINDA", "LISA", "MARY", "SUSAN", "NANCY", "BETTY", "HELEN", "SANDRA", "DONNA", "CAROL", "RUTH", "SHARON", "LAURA", "SARAH", "KIM", "ANGELA", "BRENDA", "AMY", "ANNA", "KATHY", "PAMELA", "MARTHA", "JANET", "DIANE"];
 var names = top50names_male.slice(25).concat(top50names_female.slice(0, 25)).sort(function(a,b) {return Math.random()*2-1;});
 
 //30
-var shoptypes = ['clothes', 'cookie', 'doughnut', 'food', 'music', 'pet', 'grocery', 'bakery', 'barber', 'book', 'tea', 'computer', 'flower', 'gift', 'perfume', 'shoe', 'repair', 'tobacco', 'toy', 'thrift', 'specialty', 'coffee', 'electronics', 'phone', 'watch', 'cutlery', 'fruit', 'furniture', 'jewelry', 'chocolate', 'print', 'lego', 'wellness', 'whiskey', 'duty-free', 'alcohol'];
+var shoptypes = ['clothes', 'cookie', 'donut', 'food', 'music', 'pet', 'grocery', 'bakery', 'barber', 'book', 'tea', 'computer', 'flower', 'candy', 'perfume', 'shoe', 'repair', 'tobacco', 'toy', 'coffee', 'electronics', 'phone', 'watch', 'fruit', 'furniture', 'jewelry', 'chocolate', 'print', 'lego', 'wellness', 'whiskey', 'duty-free', 'alcohol'];
 shoptypes = shoptypes.sort(function(a,b) {return Math.random()*2-1;});
 
 var supplier_category = "shop", customer_category = "house";
@@ -22,10 +24,10 @@ Map = function() {
 	this.labels=[];
 	this.group_colors = [0xffffff];
 	this.boundary_color = 0xffffff;
-	
+
 	this.building_colors = [];
 	this.building_functions = [];
-	
+
 	this.getCentroid = function(ids) {
 		var xs = 0, ys = 0;
 		for (var i = 0; i < ids.length; i++) {
@@ -42,7 +44,7 @@ Map = function() {
 		}
 		return ids;
 	};
-	
+
 	this.getIdsByFunctionName = function(functionname) {
 		var ids = [];
 		for (var i = 0; i < this.labels.length; i++) {
@@ -51,38 +53,38 @@ Map = function() {
 		}
 		return ids;
 	};
-	
+
 	var randomDist = function(maxd, mind) {
 		if (!maxd) maxd = DEFAULTDIST;
 		if (!mind) mind = 0; //-maxd;
 		return Math.random()*(maxd - mind) + mind;
 	};
-	
+
 	this.getDistance = function(fromId, toId) {
 		return Math.round(getEdgeDistance(objects[fromId], objects[toId]));
 	};
-	
+
 	this.randomMap = function(n) {
 		var maxgroups = 3;
-		
+
 		this.building_coords = [];
 		this.cluster_assignments = [];
 		this.group_colors = rndColors(maxgroups);
-		
+
 		var fnames = function_name_groups.slice(); //shuffle(function_name_groups.slice());
 		fnames[0] = shuffle(fnames[0]);
 		fnames[1] = shuffle(fnames[1]);
 		function_numbers = [0,0];
-		
+
 		var functions = [], colors = [];
 		for (var i=0; i<n; i++) {
 			var pos = rndNotTooClose(this.building_coords, function() {return randomDist(DEFAULTDIST*2);}, null, BUILDINGWIDTH);
 			this.building_coords.push([pos[0], pos[1]]);
-			
+
 			//TODO random map
 			//TODO 12 normal trials, 3 random trials (~30min)
-			//TODO predict rndmap clusterings from feature importances 
-			
+			//TODO predict rndmap clusterings from feature importances
+
 			if (i<=1) {
 				fid = i; //there must be at least one customer and supplier (for delivery game)
 			}
@@ -100,16 +102,16 @@ Map = function() {
 	this.decisionboundaryMap = function(features) {
 		var BUILDINGS = 4;
 		var groups = 2;
-		
+
 		this.clusters = groups;
 		this.building_coords = [];
 		this.cluster_assignments = [];
 		this.group_colors = rndColors(groups);
-		
+
 		var fnames = function_name_groups.slice(); //shuffle(function_name_groups.slice());
 		fnames[0] = shuffle(fnames[0]);
 		fnames[1] = shuffle(fnames[1]);
-		
+
 		var mu = new Array(groups), sigma = new Array(groups);
 		for (var i=0; i<groups; i++) {
 			var pos = rndNotTooClose(mu, function() {return randomDist(0, 500);}, function() {return randomDist(0, 500);}, 300);
@@ -121,12 +123,12 @@ Map = function() {
 		while (mu.length == 0 || tooClose([mu[0]], mu[1][0], mu[1][1], 300) || !tooClose([mu[0]], mu[1][0], mu[1][1], 500)) {
 			mu = [[randomDist(0, 800), randomDist(0, 800)], [randomDist(0, 800), randomDist(0, 800)]];
 		}
-		//alert(getDistance(mu[0][0], mu[0][1], mu[1][0], mu[1][1])); 
+		//alert(getDistance(mu[0][0], mu[0][1], mu[1][0], mu[1][1]));
 
 		function_numbers = [0,0,0];
-		
+
 		var permuted_id = shuffle(BUILDINGS);
-		
+
 		var colors = [], functions = [];
 		var dx = mu[0][0] - mu[1][0], dy = mu[0][1] - mu[1][1];
 		var alpha = Math.atan2(dy, dx);
@@ -143,7 +145,7 @@ Map = function() {
 				colors.push(c);
 			}
 		}
-		
+
 		// additional 1 building, characterized by 3D distance vector
 		/*
 		* characterize building by distance to the 2 clusters in 3D feature space: [position, color, function]
@@ -155,11 +157,11 @@ Map = function() {
 		}
 		var centroid1 = this.getCentroid(this.getIdsByCluster(0)), centroid2 = this.getCentroid(this.getIdsByCluster(1));
 		var dx = centroid2[0] - centroid1[0], dy = centroid2[1] - centroid1[1];
-		var hx = centroid1[0] + dx*features[0], hy = centroid1[1] + dy*features[0]; 
+		var hx = centroid1[0] + dx*features[0], hy = centroid1[1] + dy*features[0];
 		//alert(centroid1+"\n"+centroid2+"\n"+features[0]+"\n"+[hx, hy]);
 		var col = interpolateColor(features[1], this.group_colors[0], this.group_colors[1]);
 		var fun;
-		if (features[2] > 0.5) { 
+		if (features[2] > 0.5) {
 			function_numbers[1]++;
 			fun = fnames[1][function_numbers[1]];
 		}
@@ -172,20 +174,20 @@ Map = function() {
 		colors.push(col);
 		functions.push(fun);
 		this.boundary_color = col;
-		
+
 		this.renderMap(this.building_coords, colors, functions);
 		//
 		for (var i=0; i<groups; i++) {
 			this.renderClusterInMinimap([mu[i][0], mu[i][1], sigma[i][0], sigma[i][1]]);
 		}
 		//
-		
+
 		return [this.building_coords, this.cluster_assignments];
 	};
 
 	this.groupedMap = function(groups, by_function, by_colors, buildings) {
 		var BUILDINGS = buildings ? buildings : 5;
-		
+
 		this.clusters = groups;
 		this.building_coords = [];
 		this.cluster_assignments = [];
@@ -196,11 +198,11 @@ Map = function() {
 		else {
 			this.group_colors = rndColors(groups);
 		}
-		
+
 		var fnames = function_name_groups.slice();
 		fnames[0] = shuffle(fnames[0]);
 		fnames[1] = shuffle(fnames[1]);
-		
+
 		var mu = new Array(groups), sigma = new Array(groups);
 		for (var i=0; i<groups; i++) {
 			var pos = rndNotTooClose(mu, randomDist, randomDist, MINGROUPDIST);
@@ -209,18 +211,18 @@ Map = function() {
 		}
 
 		function_numbers = [0,0,0];
-		
+
 		var permuted_id = shuffle(BUILDINGS);
-		
+
 		var colors = [], functions = [];
 		for (var i=0; i<BUILDINGS; i++) {
-			var clid = permuted_id[i]%groups; 
+			var clid = permuted_id[i]%groups;
 			var c = this.group_colors[clid];
-			
+
 			var pos = rndNotTooClose(this.building_coords, function() {return normal_random(mu[clid][0], sigma[clid][0]);}, function() {return normal_random(mu[clid][1], sigma[clid][1]);});
 			this.building_coords.push([pos[0], pos[1]]);
 			this.cluster_assignments.push(clid);
-			
+
 			if (by_function) {
 				function_numbers[clid]++;
 				functions.push(fnames[clid][function_numbers[clid]]);
@@ -232,16 +234,16 @@ Map = function() {
 			}
 		}
 		this.renderMap(this.building_coords, colors, functions);
-		
+
 		//
 		for (var i=0; i<groups; i++) {
 			this.renderClusterInMinimap([mu[i][0], mu[i][1], sigma[i][0], sigma[i][1]]);
 		}
 		//
-		
+
 		return [this.building_coords, this.cluster_assignments];
 	};
-	
+
 	var eqclusters2 = [[1,1,0,0,0,0], [0,0,0,1,1,0], [0,0,0,0,1,1], [1,0,0,1,0,0], [0,1,0,0,0,1]];
 	var eqclusters3 = [[1,1,0,0,0,2], [0,0,0,1,1,2], [0,0,0,2,1,1], [1,0,0,1,0,1], [0,1,0,2,0,1]];
 	var eqclusters;
@@ -249,41 +251,41 @@ Map = function() {
 		//
 		//if (!equidistant) equidistant = false; // equidistant, or added position noise
 		var equidistant = true; //always equidistant
-		
+
 		var gridsize = 3;
-		eqclusters = groups == 2 ? eqclusters2 : eqclusters3; 
-		
+		eqclusters = groups == 2 ? eqclusters2 : eqclusters3;
+
 		//var BUILDINGS = 4 + Math.round(Math.random()); // buildings: 4 || 5
 		var BUILDINGS = 5;
 		//var rect = Math.round(Math.random()); // rectangular or triangular
 		var rect = 0; //always triangular
-		
+
 		this.clusters = groups;
 		this.building_coords = [];
 		this.cluster_assignments = [];
 		this.group_colors = by_function ? [] : rndColors(groups);
 		if (by_function)
 			for (var i = 0; i < groups; i++) this.group_colors.push(0xffffff);
-		
+
 		var fnames = function_name_groups.slice();
 		fnames[0] = shuffle(fnames[0]);
 		fnames[1] = shuffle(fnames[1]);
-		
+
 		var d = MINDIST*2 + Math.random()*DEFAULTDIST;
-		
+
 		var rndi = Math.floor(Math.random()*eqclusters.length);
 		var clid_vec = groups ? eqclusters[rndi] : [0,0,0,0,0,0];
 		var oc = clid_vec;
 		var colors = [], functions = [];
-		
+
 		//alert(groups+"\n"+rndi);
 
 		function_numbers = [0,0,0];
-		
+
 		var j = 0;
 		for (var i=3; i<BUILDINGS+4; i++) {
 			if (i==5) continue;
-			
+
 			var xi = Math.floor(i/gridsize), yi = (i%gridsize);
 			if (rect)
 				var hx = xi * d, hy = yi * d; // rectangular
@@ -291,7 +293,7 @@ Map = function() {
 				var hx = xi * d + (yi%2)*d/2, hy = yi * d * Math.sqrt(3)/2; // triangular grid
 			var clid = clid_vec[i-3];
 			var c = this.group_colors[clid];
-			
+
 			if (!equidistant) {
 				hx += Math.random()*d/2 - d/4;
 				hy += Math.random()*d/2 - d/4;
@@ -310,44 +312,44 @@ Map = function() {
 			}
 		}
 		this.renderMap(this.building_coords, colors, functions);
-		
+
 		return [this.building_coords, this.cluster_assignments];
 	};
-	
-	
+
+
 	var tspeqclusters2 = [[1,1,0,1,1,0,0,0,0], [0,0,0,1,1,0,1,1,0], [0,1,1,0,1,1,0,0,0], [0,0,0,0,1,1,0,1,1]];
 	var tspeqclusters3 = [[1,1,2,1,1,2,0,0,2], [2,2,2,1,1,0,1,1,0], [0,1,1,0,1,1,2,2,2], [2,0,0,2,1,1,2,1,1]];
 	var tspeqclusters;
 	this.regularTspMap = function(groups, buildings) {
 		//
 		var equidistant = false; // equidistant, or added position noise
-		
+
 		var gridsize = 3;
-		tspeqclusters = groups == 2 ? tspeqclusters2 : tspeqclusters3; 
-		
+		tspeqclusters = groups == 2 ? tspeqclusters2 : tspeqclusters3;
+
 		var rect = Math.round(Math.random()); // rectangular or triangular
-		
+
 		this.clusters = groups;
 		this.building_coords = [];
 		this.cluster_assignments = [];
 		this.group_colors = rndColors(groups);
-		
+
 		var fnames = shuffle(function_name_groups.slice());
 		fnames[0] = shuffle(fnames[0]);
 		fnames[1] = shuffle(fnames[1]);
-		
+
 		var d = MINDIST*2 + Math.random()*DEFAULTDIST;
-		
+
 		var rndi = Math.floor(Math.random()*tspeqclusters.length);
-		
+
 		//alert((groups == 2 ? "tspeqclusters2" : "tspeqclusters3") + "\n" + rndi + "\n" + tspeqclusters[rndi]);
-		
+
 		var clid_vec = groups ? tspeqclusters[rndi] : [0,0,0,0,0,0];
 		var oc = clid_vec;
 		var colors = [], functions = [];
-		
+
 		function_numbers = [0,0,0];
-		
+
 		var j = 0;
 		for (var i=0; i<buildings; i++) {
 			var xi = Math.floor(i/gridsize), yi = (i%gridsize);
@@ -357,7 +359,7 @@ Map = function() {
 				var hx = xi * d + (yi%2)*d/2, hy = yi * d * Math.sqrt(3)/2; // triangular grid
 			var clid = clid_vec[i];
 			var c = this.group_colors[clid];
-			
+
 			if (!equidistant) {
 				hx += Math.random()*d/2 - d/4;
 				hy += Math.random()*d/2 - d/4;
@@ -368,7 +370,7 @@ Map = function() {
 			colors.push(c);
 		}
 		this.renderMap(this.building_coords, colors, functions);
-		
+
 		return [this.building_coords, this.cluster_assignments];
 	};
 
@@ -383,13 +385,13 @@ Map = function() {
 				addHouse(f, coords[i][0], coords[i][1], colors[i]);
 			}
 			else {
-				addHouse(f, coords[i][0], coords[i][1]);				
+				addHouse(f, coords[i][0], coords[i][1]);
 			}
 		}
 		this.renderMinimap(coords, colors);
 		return coords;
 	};
-	
+
 	this.renderMinimap = function(coords, colors) {
 		var html = "";
 		for (var i = 0; i < objects.length; i++) {
@@ -406,7 +408,7 @@ Map = function() {
 		var c = minimapCoords([controls.getObject().position.x, controls.getObject().position.z]);
 		html += "<div id='me' class='dot' style='left:"+c[0]+"px;top:"+c[1]+"px;border:1px solid red;'></div>";
 		$("#minimap").html(html);
-		
+
 		$("#minimap").hide();
 	};
 	this.renderClusterInMinimap = function(c) {
@@ -416,14 +418,14 @@ Map = function() {
 		c = minimapCoords(c);
 		$("#minimap").html($("#minimap").html()+"<div class='dot gauss' style='left:"+c[0]+"px;top:"+c[1]+"px;height:"+c[2]+"px;width:"+c[3]+"px;background-color: rgba(0, 255, 255, 0.15);-webkit-border-radius: 1000px; -moz-border-radius: 1000px; border-radius: 1000px;'></div>");
 	};
-	
+
 	this.update = function() {
 		if ($("#me")) {
 			var c = minimapCoords([controls.getObject().position.x, controls.getObject().position.z]);
 			$("#me").css({left: c[0], top: c[1]});
 		}
 	};
-	
+
 	this.clearMap = function() {
 		for (var i = 0; i < objects.length; i++) {
 			scene.remove(objects[i]);
@@ -431,7 +433,7 @@ Map = function() {
 		while (objects.length > 0) {
 			objects.pop();
 		}
-		
+
 		this.building_coords=[];
 		this.cluster_assignments=[];
 		this.labels=[];
@@ -451,30 +453,30 @@ function minimapCoords(c) {
 function addHouse(houselabel, hx, hz, color) { //hx and hz in m
 	var chouse = houses[defaulthouse].clone();
 	chouse.children[0].children[1].material = chouse.children[0].children[1].material.clone(); //otherwise houses share material
-	
+
 	chouse.position.set(hx / DISTSCALE, 0, hz / DISTSCALE); // convert between m and units
 	chouse.scale.set(HOUSESCALE, HOUSESCALE, HOUSESCALE);
 	bbox = getBoundingBox(chouse);
-	
+
 	var lbl = houselabel;
 	var text1 = get3DText(lbl, (bbox.max.z-bbox.min.z)/2);
 	chouse.add(text1);
 	var text2 = get3DText(lbl, bbox.min.z-0.01, Math.PI);
 	chouse.add(text2);
-	
+
 	if (color) {
 		setHouseColor(chouse, color);
 	}
-	
+
 	scene.add(chouse);
 	objects.push(chouse);
-	
+
 	return chouse;
 }
 
 // distance helper functions
 
-function getDistance(x1, z1, x2, z2) { 
+function getDistance(x1, z1, x2, z2) {
 	//var x1 = o1.position.x, x2 = o2.position.x, z1 = o1.position.z, z2 = o2.position.z;
 	return Math.sqrt(Math.pow(x2-x1, 2) + Math.pow(z2-z1, 2));
 }
@@ -485,7 +487,7 @@ function getEdgeDistance(o1, o2) { // in m
 	var l = buildingwidthpx / 2;
 	var v1 = [new THREE.Vector2(x1 + l, z1 + l), new THREE.Vector2(x1 + l, z1 - l), new THREE.Vector2(x1 - l, z1 + l), new THREE.Vector2(x1 - l, z1 - l)];
 	var v2 = [new THREE.Vector2(x2 + l, z2 + l), new THREE.Vector2(x2 + l, z2 - l), new THREE.Vector2(x2 - l, z2 + l), new THREE.Vector2(x2 - l, z2 - l)];
-	
+
 	var d = leastDistance(v1, v2)*DISTSCALE;
 	return d;
 	//return (Math.sqrt(Math.pow(dx, 2) + Math.pow(dz, 2))*DISTSCALE - buildingwidth*DISTSCALE);
@@ -496,7 +498,7 @@ function getPointToEdgeDistance(o1, o2) { // in m
 	var l = buildingwidthpx / 2;
 	var v1 = [new THREE.Vector2(x1, z1)];
 	var v2 = [new THREE.Vector2(x2 + l, z2 + l), new THREE.Vector2(x2 + l, z2 - l), new THREE.Vector2(x2 - l, z2 + l), new THREE.Vector2(x2 - l, z2 - l)];
-	
+
 	var d = leastDistance(v1, v2)*DISTSCALE;
 	return d;
 	//return (Math.sqrt(Math.pow(dx, 2) + Math.pow(dz, 2))*DISTSCALE - buildingwidth*DISTSCALE);
@@ -557,11 +559,11 @@ var rndGridClusters = function(gridsize, no_clusters) {
 		cmap[i]=[];
 		for (var j=0; j<gridsize; j++) {
 			cmap[i][j]=0;
-		}	
+		}
 	}
-	
+
 	if (!no_clusters) return cmap;
-	
+
 	var S = 2;
 	var xs = Math.round(Math.random()*(gridsize - S));
 	var ys = Math.round(Math.random()*(gridsize - S));
@@ -614,11 +616,11 @@ var rndColors = function(n, MINDIST) {
 		rgbs.push([r, g, b]);
 		colors.push(65536*r+256*g+b);
 	}
-	return colors; 
+	return colors;
 };
 
 function intToCol(i, len) {
-	if (!i) 
+	if (!i)
 		i=0;
 	if (!len) len = 6;
 	var col = i.toString(16);
@@ -629,7 +631,7 @@ function intToCol(i, len) {
 function interpolateColor(fraction, col1, col2) {
 	var r1=Math.floor(col1/65536), g1=Math.floor(col1/256)%256, b1=col1%256;
 	var r2=Math.floor(col2/65536), g2=Math.floor(col2/256)%256, b2=col2%256;
-	var dr = (r2 - r1), dg = (g2 - g1), db = (b2 - b1); 
+	var dr = (r2 - r1), dg = (g2 - g1), db = (b2 - b1);
 	var r = Math.round(r1 + dr*fraction)%256, g = Math.round(g1 + dg*fraction)%256, b = Math.round(b1 + db*fraction)%256;
 	return (65536*r+256*g+b);
 }

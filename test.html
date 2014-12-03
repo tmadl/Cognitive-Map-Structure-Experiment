@@ -11,7 +11,7 @@
   	<script src="numeric-1.2.6.min.js"></script>
 </head>
 <body>
-<!--	
+	
 <script>
 var permArr = [], usedChars = [];
 function permutations(input) {
@@ -40,7 +40,7 @@ function perms(input) {
 </script>
 	
 <script>
-
+/*
 var protocols = [
 ["Sarah","Roger","Barbara","Watch","Tobacco"],
 ["Tobacco","Watch","Barbara","Sarah","Roger"],
@@ -49,7 +49,16 @@ var protocols = [
 ["Barbara","Sarah","Roger","Tobacco","Watch"],
 ["Barbara","Sarah","Roger","Tobacco","Watch"],
 //["Roger","Sarah","Barbara","Watch","Tobacco"]
+];*/
+
+var protocols = [
+["Sarah","Watch","Tobacco","Roger","Barbara"],
+["Tobacco","Watch","Barbara","Sarah","Roger"],
+["Watch","Tobacco","Sarah","Barbara","Roger"],
+["Barbara","Tobacco","Sarah","Roger","Watch"],
+["Roger","Tobacco","Watch","Sarah","Barbara"],
 ];
+
 for (var i=0; i<protocols.length; i++) {
 	document.write($.toJSON(protocols[i])+"<br/>");
 }
@@ -95,16 +104,13 @@ function extractMapStructure(protocols) {
 			}
 		}
 		
-		//add unused elements to new submap
-		var submap = [];
+		//add unused elements to map
 		for (var i=0; i<items.length; i++) {
 			if (useditems.indexOf(items[i]) < 0) {
-				submap.push(items[i]);
+				mapstructure.push(items[i]);
 			}
 		}
-		if (submap.length > 0)
-			mapstructure.push(submap);
-		
+
 		/*
 		//if one map contains all elements except one, add that one to its own submap
 		if (mapstructure.length > 0 && mapstructure[0].length == items.length) { //map contains level id plus all items -> its length is number of items + 1
@@ -195,7 +201,7 @@ function k_combinations(set, k) {
 }*/
 
 </script>
--->
+
 	
 <script>
 
@@ -338,7 +344,7 @@ function k_combinations(set, k) {
 
 </script>
 	
-	
+	<!--
 	
 	<script>
 
@@ -399,6 +405,6 @@ alert(theta);
 alert($.toJSON(X));
 	
 	</script>
-	
+	-->
 </body>
 </html>

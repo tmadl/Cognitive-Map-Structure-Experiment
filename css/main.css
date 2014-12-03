@@ -62,7 +62,7 @@ body {
 }
 
 #statusbar {
-	width: 200px;
+	width: 50px;
 	background-color: rgba(0, 0, 0, 0.4);
 	position:absolute;
 	top: 0px;

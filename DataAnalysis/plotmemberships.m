@@ -1,6 +1,4 @@
 %ldata = loadjson(['logs/lognewC_59.txt']);d=ldata.exp3
-names=fieldnames(d);
-N=length(names);
 
 s = ceil(sqrt(N));
 w = s;
@@ -9,6 +7,8 @@ h = s;
 types = ['?', '0', '1'];
 
 figure;
+names=fieldnames(d);
+N=length(names);
 for i=1:N
     if ~strcmp(names{i}, 'last_features')
         t = d.(names{i});

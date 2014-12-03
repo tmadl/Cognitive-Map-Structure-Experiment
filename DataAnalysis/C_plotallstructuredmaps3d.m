@@ -1,15 +1,22 @@
 %ldata = loadjson(['logs/lognewC_39.txt']);
 %d=ldata.exp5
 
-%if ~exist('expno') || ~exist('structuredmapsno') || strcmp(expno, 'exp2')
-    expno = 'exp3';
-    %expno = 'exp5';
+if ~exist('expno') || ~exist('structuredmapsno') || ~strcmp(expno, 'exp5')
+    %expno = 'exp3';
+    expno = 'exp5';
     getstructuredmaps;
-%end;
+end;
 
-thetas = cell2mat(allthetas);
-for i=1:size(thetas, 2)
-    thetas(:, i) = abs(thetas(:, i) / thetas(1, i));
+%thetas = cell2mat(allthetas);
+thetas = [];
+j=1;
+for i=1:size(allthetas, 2)
+    if ~isempty(allthetas{i}) && length(allthetas{i}) == 4
+        thetas(:, j) = allthetas{i};
+        thetas(:, j) = abs(thetas(:, j) / thetas(1, j));
+        j = j + 1;
+    end;
+    %thetas(:, i) = abs(thetas(:, i) / thetas(1, i));
 end
 %thetas=thetas(:, [1:12 14:16])
 metatheta = mean(thetas')
@@ -23,10 +30,12 @@ figure;
 wrong = 0;
 for i=1:structuredmapsno
     smaps = structuredmaps{i};
-    coords = allcoords{i};
     colors = allcols{i};
     labels = alllabels{i};
-    dp = allthetadatapoints(i);
+    dp = 0;
+    if i < numel(allthetadatapoints)
+        dp = allthetadatapoints(i);
+    end;
     
     theta = allthetas{i};
     %theta = alljsthetas{i};
@@ -35,6 +44,9 @@ for i=1:structuredmapsno
     subplot(w, w, i);hold on;
     %figure(2);
     %subplot(w, w, i);hold on;
+    
+    coords = allcoords{i};
+    %coords = allsketchmaps{i}; disp('sketchmap coord clustering');
     clustermap;
     
     figure(1);
@@ -45,7 +57,11 @@ for i=1:structuredmapsno
     for j=1:size(coords,1)
         mapid = -1;
         for k=1:numel(smaps)
-            submap = smaps{k};
+            if iscell(smaps)
+                submap = smaps{k};
+            else
+                submap = smaps(k, :);
+            end;
             if ~isnumeric(submap)
                 if iscell(submap) || (size(submap, 1) > 1 && size(submap, 2) > 1)
                     for l=1:length(submap)
@@ -53,6 +69,9 @@ for i=1:structuredmapsno
                             s = submap{l};
                         else
                             s = submap(l, :);
+                        end;
+                        if iscell(s)
+                            s = s{1};
                         end;
                         if findstr(labels{j}, s)
                             mapid = k;
@@ -105,9 +124,9 @@ for i=1:structuredmapsno
 
     if clusterscorrect < 5 && clustersincorrect < 5
         str='wrong';
-        wrong = wrong + 1
+        wrong = wrong + 1;
     else
-        str = 'ok'
+        str = 'ok';
     end;
 
 
