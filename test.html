@@ -52,12 +52,15 @@ var protocols = [
 ];*/
 
 var protocols = [
+["Barbara","Sarah","Roger","Tobacco","Watch"],
+["Tobacco","Watch","Roger","Sarah","Barbara"],
 ["Sarah","Watch","Tobacco","Roger","Barbara"],
 ["Tobacco","Watch","Barbara","Sarah","Roger"],
 ["Watch","Tobacco","Sarah","Barbara","Roger"],
-["Barbara","Tobacco","Sarah","Roger","Watch"],
+["Barbara","Tobacco","Watch","Sarah","Roger"],
 ["Roger","Tobacco","Watch","Sarah","Barbara"],
 ];
+var cues=[-1,-1,0,1,2,3,4];
 
 for (var i=0; i<protocols.length; i++) {
 	document.write($.toJSON(protocols[i])+"<br/>");
@@ -66,30 +69,39 @@ document.write("<br/><br/>");
 
 
 var d1 = new Date();
-var mapstructure = extractMapStructure(protocols);
+var mapstructure = extractMapStructure(protocols, cues);
 var d2 = new Date();
-document.write("<br/>"+(d2-d1));
+document.write("<br/>"+(d2-d1)+"<br/>");
+
+document.write("<br/><br/>");
 
 for (var i=0; i<mapstructure.length; i++) {
 	document.write($.toJSON(mapstructure[i])+"<br/>");
 }
 
-function extractMapStructure(protocols) {
+function extractMapStructure(protocols, cues) {
 		var items = protocols[0];
 		var useditems = [];
 		var mapstructure = [];
-		
-		for (var tuplelength = items.length-1; tuplelength >= 2; tuplelength--) {
+
+		for (var tuplelength = items.length-1; tuplelength >= 2; tuplelength--) { 
 			var comb = k_combinations(items, tuplelength);
 			for (var i=0; i < comb.length; i++) {
-				// check if the i'th possible tuple occurs in ALL recall protocols...
+				// check if the i'th possible tuple occurs in ALL recall protocols EXCEPT where the cue was one of the tuple elements......
 				var perms = permutations(comb[i]), occurs = true;
 				for (var j=0; j < protocols.length && occurs; j++) {
 					occurs = false;
-					for (var k=0; k < perms.length; k++) { //...in at least one permutation
-						if (arrayContains(protocols[j], perms[k])) {
-							occurs = true;
-							break;
+					var cue = protocols[j][0];
+					if (comb[i].indexOf(cue)>-1 && (!cues || cues.length <= j || cues[j] >= 0)) {
+						//...except if one of the elements of this submap was cued (P1 is the cue); and its not an uncued trial
+						occurs = true;
+					}
+					else {
+						for (var k=0; k < perms.length; k++) { //...in at least one permutation
+							if (arrayContains(protocols[j], perms[k])) {
+								occurs = true;
+								break;
+							}
 						}
 					}
 				}
@@ -103,13 +115,14 @@ function extractMapStructure(protocols) {
 				}
 			}
 		}
-		
+
 		//add unused elements to map
 		for (var i=0; i<items.length; i++) {
 			if (useditems.indexOf(items[i]) < 0) {
 				mapstructure.push(items[i]);
 			}
 		}
+
 
 		/*
 		//if one map contains all elements except one, add that one to its own submap
@@ -122,7 +135,7 @@ function extractMapStructure(protocols) {
 				}
 			}
 		}*/
-		
+
 		return mapstructure;
 	};
 

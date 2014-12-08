@@ -8,6 +8,7 @@ var serverlogurl = "http://madlnet.net/tsworks/savelog.php"; //takes the log POS
 var getcodeurl = "http://madlnet.net/tsworks/getcode.php";
 var subject_id = -1;
 
+var DEBUG = true;
 
 /*
  * exp1 check distance, color, func. hypotheses - 24 trials (8 / hyp)
@@ -55,7 +56,7 @@ Experiment = function() {
 	var coords = []; //x, y
 
 	//var taskNumbersPerExperiment = [-1, -1, 12, 12, -1, 3];
-	var taskNumbersPerExperiment = [-1, -1, 1, 1, -1, 1];
+	var taskNumbersPerExperiment = [-1, -1, 15, 15, -1, 5];
 	var acceptableDistanceError = 30; // percent error acceptable
 	var MAXSTRDIFF = 2; //max string difference for entered bldg names
 	var requiredAcceptableJudgments = 5;
@@ -744,22 +745,30 @@ Experiment = function() {
 					exp_properties.taskno--;
 					nextTask();
 				}
+				else if (this.recallcues[this.recallcueid-1] >= 0 && map.labels[this.recallcues[this.recallcueid-1]].indexOf(rnames[0]) < 0) {
+					swalert("Incorrect starting building", "You did not start with the correct building ("+map.labels[this.recallcues[this.recallcueid-1]]+"). This round will be reset. Please memorize the names of the buildings as well as their positions.");
+					exp_properties.taskno--;
+					nextTask();
+				}
 				else {
 					//recalled; store and cue
 					data["exp"+exp_properties.expno]["task"+exp_properties.taskno].recall_protocols.push(rnames);
-					data["exp"+exp_properties.expno]["task"+exp_properties.taskno].recall_cues.push(this.recallcues[this.recallcueid]);
+					data["exp"+exp_properties.expno]["task"+exp_properties.taskno].recall_cues.push(this.recallcues[this.recallcueid-1]);
 
 					if (this.recallcueid >= this.recallcues.length) {
 						recall_task = false;
 						// finished recall trials; calculate boundary membership
 						var protocols = data["exp"+exp_properties.expno]["task"+exp_properties.taskno].recall_protocols;
-						var mapstructure = this.extractMapStructure(protocols);
+						var mapstructure = this.extractMapStructure(protocols, data["exp"+exp_properties.expno]["task"+exp_properties.taskno].recall_cues);
 						data["exp"+exp_properties.expno]["task"+exp_properties.taskno].mapstructure = mapstructure;
 						var dblabel = map.labels[map.labels.length-1].trim().split(" ")[0].split("'")[0];
 						var dbmap = null;
-						for (var i = 0; i < mapstructure.length; i++)
-							if (mapstructure[i].indexOf(dblabel)>-1 && (dbmap == null || mapstructure[i].slice(1).length < dbmap.length && mapstructure[i].slice(1).length > 1)) //find smallest map > 1 with db on it
-								dbmap = mapstructure[i].slice(1);
+						for (var i = 0; i < mapstructure.length; i++) {
+							var cmap = mapstructure[i];
+							if (!isNaN(cmap[0])) cmap = cmap.slice(1);
+							if (cmap.indexOf(dblabel)>-1 && (dbmap == null || cmap.length < dbmap.length && cmap.length > 1)) //find smallest map > 1 with db on it
+								dbmap = cmap;
+						}
 						var cluster_membership = -1;
 						if (dbmap != null) {
 							for (var i = 0; i < dbmap.length; i++) {
@@ -791,22 +800,29 @@ Experiment = function() {
 			}
 		}
 	};
-	this.extractMapStructure = function(protocols) {
+	this.extractMapStructure = function(protocols, cues) {
 		var items = protocols[0];
 		var useditems = [];
 		var mapstructure = [];
 
-		for (var tuplelength = items.length-1; tuplelength >= 2; tuplelength--) {
+		for (var tuplelength = items.length-1; tuplelength >= 2; tuplelength--) { 
 			var comb = k_combinations(items, tuplelength);
 			for (var i=0; i < comb.length; i++) {
-				// check if the i'th possible tuple occurs in ALL recall protocols...
+				// check if the i'th possible tuple occurs in ALL recall protocols EXCEPT where the cue was one of the tuple elements......
 				var perms = permutations(comb[i]), occurs = true;
 				for (var j=0; j < protocols.length && occurs; j++) {
 					occurs = false;
-					for (var k=0; k < perms.length; k++) { //...in at least one permutation
-						if (arrayContains(protocols[j], perms[k])) {
-							occurs = true;
-							break;
+					var cue = protocols[j][0];
+					if (comb[i].indexOf(cue)>-1 && (!cues || cues.length <= j || cues[j] >= 0)) {
+						//...except if one of the elements of this submap was cued (P1 is the cue); and its not an uncued trial
+						occurs = true;
+					}
+					else {
+						for (var k=0; k < perms.length; k++) { //...in at least one permutation
+							if (arrayContains(protocols[j], perms[k])) {
+								occurs = true;
+								break;
+							}
 						}
 					}
 				}
@@ -821,15 +837,13 @@ Experiment = function() {
 			}
 		}
 
-		//add unused elements to new submap
-		var submap = [];
+		//add unused elements to map
 		for (var i=0; i<items.length; i++) {
 			if (useditems.indexOf(items[i]) < 0) {
-				submap.push(items[i]);
+				mapstructure.push(items[i]);
 			}
 		}
-		if (submap.length > 0)
-			mapstructure.push(submap);
+
 
 		/*
 		//if one map contains all elements except one, add that one to its own submap
