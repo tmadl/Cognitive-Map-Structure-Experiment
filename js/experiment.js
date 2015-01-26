@@ -15,7 +15,7 @@ var DEBUG = true;
  * exp2 learn importances (Decision boundary) - 24 trials
  *
  * exp3 random map (try to predict) - 6 trials
- */
+ */ 
 
 //called after models loaded
 function init() {
@@ -947,7 +947,7 @@ Experiment = function() {
 	
 	this.timerLoop = function() {
 		if (controls.enabled) {
-			coords.push([controls.getObject().position.x * DISTSCALE, controls.getObject().position.z * DISTSCALE]);
+			coords.push([Math.round(controls.getObject().position.x * DISTSCALE), Math.round(controls.getObject().position.z * DISTSCALE)]);
 		}
 		
 		var me = this;

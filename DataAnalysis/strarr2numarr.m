@@ -18,6 +18,10 @@ function [ ret ] = strarr2numarr( strarr )
         if isstr(c)
             c = str2num(c);
         end;
+        if isempty(c)
+            ret = strarr2numarr(strarr');
+            break;
+        end;
         ret(i) = c;
     end;
 end

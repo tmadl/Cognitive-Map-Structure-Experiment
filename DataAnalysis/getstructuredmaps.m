@@ -15,6 +15,7 @@ allthetadatapoints = [];
 allcassignments = {};
 allconditions = {};
 alllooerrors = [];
+allsubjectids = [];
 unstructuredconditions = {};
 unstructuredmapsno = 0;
 doplot = 0;
@@ -37,6 +38,7 @@ for fi=3:length(files) %3
         structured = 0;
         for i=1:N
             if ~strcmp(names{i}, 'last_features')
+                d=ldata.(expno);
                 t = d.(names{i});
                 z=z+1;
                 if isfield(t, 'mapstructure') && numel(t.mapstructure) > 1
@@ -44,9 +46,10 @@ for fi=3:length(files) %3
 
                     %for k=1:numel(t.mapstructure)
                         structuredmapsno = structuredmapsno + 1;
+                        allsubjectids(structuredmapsno) = fi;
 
-                        %%structuredmaps{structuredmapsno} = t.mapstructure;
-                        structuredmaps{structuredmapsno} = extractMapStructure(t.recall_protocols); disp('custom mapstructure extraction');
+                        structuredmaps{structuredmapsno} = t.mapstructure;
+                        %mapstructure = extractMapStructure(t.recall_protocols, t.recall_cues); structuredmaps{structuredmapsno} = mapstructure; disp('custom mapstructure extraction');
                         
                         alllabels{structuredmapsno} = t.labels;
                         allcoords{structuredmapsno} = t.real_coords;
@@ -107,6 +110,7 @@ end;
 % allcassignments = allcassignments(idx);
 % allconditions = allconditions(idx);
 % alllooerrors = alllooerrors(idx);
+% allfunctions = allfunctions(idx);
 % 
 % excluded = structuredmapsno - length(structuredmaps)
 % structuredmapsno = length(structuredmaps);

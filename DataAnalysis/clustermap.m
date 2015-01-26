@@ -15,7 +15,7 @@ end;
 data = [coords/500 colors'/(256^3) functions'];
 %data = [coords/500 ones(length(coords), 1) functions'];  disp('color feature ignored');
 %data = coords/500; disp('dist only, no other features');
-if length(theta)>1 && sum(isnan(theta)) == 0 && theta(1) ~= 0 %&& false
+if length(theta)>1 && sum(isnan(theta)) == 0 %&& theta(1) ~= 0 %&& false
     fweights = theta(1:3) ./ theta(1); %ignore bias (theta(4))
     %fweights = metatheta(1:3); %ignore bias (theta(4))
 else
@@ -60,8 +60,10 @@ end;
 % % k means
 %[D,eigvals] = cmdscale(Y);
 cluster_number = 2; % number of clusters 
-%cluster_memberships = kmeans(D, cluster_number);
-cluster_memberships = kmeans(data2, cluster_number);
+%%cluster_memberships = kmeans(D, cluster_number);
+%cluster_memberships = kmeans(data2, cluster_number);
+
+cluster_memberships = clusterdata(data2, cluster_number);
 
 %[D,eigvals] = cmdscale(Y);
 % EMGM

@@ -62,8 +62,10 @@ var protocols = [
 ];
 var cues=[-1,-1,0,1,2,3,4];
 
+cues = cues.sort(function(a,b) {return Math.random()*2-1;});
 for (var i=0; i<protocols.length; i++) {
-	document.write($.toJSON(protocols[i])+"<br/>");
+	protocols[i] = protocols[i].sort(function(a,b) {return Math.random()*2-1;});	
+	document.write(cues[i] + ":" + $.toJSON(protocols[i])+"<br/>");
 }
 document.write("<br/><br/>");
 

@@ -1,4 +1,4 @@
-function [ mapstructure ] = extractMapStructure( protocols )
+function [ mapstructure ] = extractMapStructure( protocols, cues )
 %EXTRACTMAPSTRUCTURE Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -39,7 +39,7 @@ function [ mapstructure ] = extractMapStructure( protocols )
                     occurs = false; % must occur (checked below)...
 
                     P = protocols{j};
-                    if arrayContains(C, P(1)) && (length(protocols) <= 6 || j>2) % if 7 protocols, first 2: free recall (no cue)
+                    if arrayContains(C, P(1)) && cues(j) >= 0 % < 0 means: free recall (no cue)
                         % ...except if one of the elements of this submap was cued (P1 is the cue)
                         occurs = true;
                     else
@@ -76,6 +76,8 @@ function [ mapstructure ] = extractMapStructure( protocols )
                 m = m + 1;
             end;
         end;
+        
+        mapstructure
 
 
 %         nmap = {}; n=1;

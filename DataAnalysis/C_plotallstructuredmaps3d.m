@@ -28,12 +28,15 @@ w = ceil(sqrt(structuredmapsno));
 figure;
 %figure;
 wrong = 0;
+iswrong = [];
+wrongsubjects = [];
+
 for i=1:structuredmapsno
     smaps = structuredmaps{i};
     colors = allcols{i};
     labels = alllabels{i};
     dp = 0;
-    if i < numel(allthetadatapoints)
+    if i <= numel(allthetadatapoints)
         dp = allthetadatapoints(i);
     end;
     
@@ -46,6 +49,15 @@ for i=1:structuredmapsno
     %subplot(w, w, i);hold on;
     
     coords = allcoords{i};
+    
+    labels = alllabels{i};
+    functions = zeros(1, length(labels));
+    for j=1:length(labels)
+        if findstr(labels{j}, 'shop')
+            functions(j) = 1;
+        end;
+    end;
+    
     %coords = allsketchmaps{i}; disp('sketchmap coord clustering');
     clustermap;
     
@@ -107,7 +119,7 @@ for i=1:structuredmapsno
         else
             clustersincorrect = clustersincorrect + 1;
         end;
-        coords = data2;
+        %coords = data2;
         scatter3(coords(j, 1), coords(j, 2), colors(j)/(256^3), 40, c, s, 'LineWidth', 3);
         
         text(coords(j, 1)-0.1, coords(j, 2), [num2str(j)]);
@@ -125,7 +137,9 @@ for i=1:structuredmapsno
     if clusterscorrect < 5 && clustersincorrect < 5
         str='wrong';
         wrong = wrong + 1;
+        iswrong = [iswrong 1];
     else
+        iswrong = [iswrong 0];
         str = 'ok';
     end;
 
@@ -150,5 +164,7 @@ for i=1:structuredmapsno
 end;
 
 disp(['wrong: ' num2str(wrong) '/' num2str(structuredmapsno) ' - ' num2str(wrong/structuredmapsno)])
+disp('by subjects:');
+allsubjectids(find(iswrong==1))
 
 %title([t.mapstructure{1}(:)' '; ' t.mapstructure{2}(:)']');

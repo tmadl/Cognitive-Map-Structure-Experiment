@@ -52,6 +52,11 @@ if size(coords(idx, :), 1) > 1
 %       initial_theta = zeros(n, 1);
 %       options = optimset('Display', 'off', 'GradObj', 'on', 'maxIter', 100);
 %       [theta] = fminsearch (@(t)(kmeansthetacostfunction(t, d)), initial_theta, options);
+
+%        disp('agglomthetacostfunction')
+%        initial_theta = zeros(n, 1);
+%        options = optimset('Display', 'off', 'GradObj', 'on', 'maxIter', 50);
+%        [theta] = fminsearch (@(t)(agglomthetacostfunction(t, d)), initial_theta, options);
    
 %     model=svm('-t 0');
 %     model = model.train(coords(idx, :), classes(idx, :));
