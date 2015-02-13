@@ -47,10 +47,7 @@ for d1=1:N
     end;
 end;
 % 
-% % agglomerative
-% L=linkage(Y);
-% cluster_memberships = cluster(L, 'cutoff', 0.8); 
-% dendrogram(L);
+
 
 data2 = [];
 for i=1:size(data, 2);
@@ -64,6 +61,11 @@ cluster_number = 2; % number of clusters
 %cluster_memberships = kmeans(data2, cluster_number);
 
 cluster_memberships = clusterdata(data2, cluster_number);
+
+% % agglomerative
+% L=linkage(Y);
+% cluster_memberships = cluster(L, 'maxclust', cluster_number); 
+% dendrogram(L);
 
 %[D,eigvals] = cmdscale(Y);
 % EMGM

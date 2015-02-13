@@ -1,6 +1,10 @@
 %ldata = loadjson(['logs/lognewC_39.txt']);
 %d=ldata.exp5
 
+if ~exist('doplot')
+    doplot=1;
+end;
+
 if ~exist('expno') || ~exist('structuredmapsno') || ~strcmp(expno, 'exp5')
     %expno = 'exp3';
     expno = 'exp5';
@@ -25,8 +29,10 @@ metathetastd = std(thetas')
 
 w = ceil(sqrt(structuredmapsno));
 
-figure;
-%figure;
+if doplot
+    figure;
+end;
+
 wrong = 0;
 iswrong = [];
 wrongsubjects = [];
@@ -43,10 +49,12 @@ for i=1:structuredmapsno
     theta = allthetas{i};
     %theta = alljsthetas{i};
     
-    figure(1);
-    subplot(w, w, i);hold on;
-    %figure(2);
-    %subplot(w, w, i);hold on;
+    if doplot
+        figure(1);
+        subplot(w, w, i);hold on;
+        %figure(2);
+        %subplot(w, w, i);hold on;  
+    end;
     
     coords = allcoords{i};
     
@@ -60,8 +68,6 @@ for i=1:structuredmapsno
     
     %coords = allsketchmaps{i}; disp('sketchmap coord clustering');
     clustermap;
-    
-    figure(1);
     
     clusterscorrect = 0;
     clustersincorrect = 0;
@@ -119,17 +125,20 @@ for i=1:structuredmapsno
         else
             clustersincorrect = clustersincorrect + 1;
         end;
-        %coords = data2;
-        scatter3(coords(j, 1), coords(j, 2), colors(j)/(256^3), 40, c, s, 'LineWidth', 3);
         
-        text(coords(j, 1)-0.1, coords(j, 2), [num2str(j)]);
-        text(coords(j, 1)+0.01, coords(j, 2), ['c' num2str(cluster_memberships(j))]);
-        
-        %text(coords(j, 1)-20, coords(j, 2), [num2str(j)]);
-        %text(coords(j, 1)+2, coords(j, 2), ['c' num2str(cluster_memberships(j))]);
-        
-        %[col, fun] = meshgrid(0:0.02:1, 0:0.2:1);
-        %surf(col, fun, (-theta(2)*col - theta(3)*fun - theta(4))/theta(1), 'EdgeColor', 'b');
+        if doplot
+            %coords = data2;
+            scatter3(coords(j, 1), coords(j, 2), colors(j)/(256^3), 40, c, s, 'LineWidth', 3);
+
+            text(coords(j, 1)-0.1, coords(j, 2), [num2str(j)]);
+            text(coords(j, 1)+0.01, coords(j, 2), ['c' num2str(cluster_memberships(j))]);
+
+            %text(coords(j, 1)-20, coords(j, 2), [num2str(j)]);
+            %text(coords(j, 1)+2, coords(j, 2), ['c' num2str(cluster_memberships(j))]);
+
+            %[col, fun] = meshgrid(0:0.02:1, 0:0.2:1);
+            %surf(col, fun, (-theta(2)*col - theta(3)*fun - theta(4))/theta(1), 'EdgeColor', 'b');
+        end;
     end;
     str = '';
     
@@ -157,10 +166,12 @@ for i=1:structuredmapsno
 % %         end;
 
     
-    if length(theta) > 2
-        str = [str '; ' num2str(dp) '; d: ' num2str(round(theta(1)*10)/10) ' c: ' num2str(round(theta(2)*10)/10) ' f: ' num2str(round(theta(3)*10)/10)];
+    if doplot
+        if length(theta) > 2
+            str = [str '; ' num2str(dp) '; d: ' num2str(round(theta(1)*10)/10) ' c: ' num2str(round(theta(2)*10)/10) ' f: ' num2str(round(theta(3)*10)/10)];
+        end;
+        title(str);
     end;
-    title(str);
 end;
 
 disp(['wrong: ' num2str(wrong) '/' num2str(structuredmapsno) ' - ' num2str(wrong/structuredmapsno)])

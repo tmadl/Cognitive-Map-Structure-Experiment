@@ -24,7 +24,8 @@ function [ mapstructure ] = extractMapStructure( protocols, cues )
 
 
         N = length(items);
-        for tuplelength = 2:(N-2)
+        %for tuplelength = 2:(N-2)
+        for tuplelength = (N-2):-1:2
             comb = nchoosek(items, tuplelength);
             for i=1:length(comb)
                 % check if the i'th possible tuple occurs in ALL recall protocols EXCEPT where the cue was one of the tuple elements...

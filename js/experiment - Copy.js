@@ -713,9 +713,9 @@ Experiment = function() {
 				var allrecalled = false;
 				var bnames = [], rnames = [];
 				for (var i = 0; i < map.labels.length; i++)
-					bnames.push(map.labels[i].toLowerCase().trim().split(" ")[0].split("'")[0]);
+					bnames.push(map.labels[i].trim().split(" ")[0].split("'")[0]);
 				for (var i = 0; i < map.labels.length; i++)
-					rnames.push($("#recalled"+i).val().toLowerCase().trim().split(" ")[0].split("'")[0]);
+					rnames.push($("#recalled"+i).val().trim().split(" ")[0].split("'")[0]);
 				if (rnames.length == bnames.length) {
 					var correct = 0;
 					for (var i = 0; i < rnames.length; i++) {
@@ -745,7 +745,7 @@ Experiment = function() {
 					exp_properties.taskno--;
 					nextTask();
 				}
-				else if (this.recallcues[this.recallcueid-1] >= 0 && map.labels[this.recallcues[this.recallcueid-1]].toLowerCase().indexOf(rnames[0].toLowerCase()) < 0) {
+				else if (this.recallcues[this.recallcueid-1] >= 0 && map.labels[this.recallcues[this.recallcueid-1]].indexOf(rnames[0]) < 0) {
 					swalert("Incorrect starting building", "You did not start with the correct building ("+map.labels[this.recallcues[this.recallcueid-1]]+"). This round will be reset. Please memorize the names of the buildings as well as their positions.");
 					exp_properties.taskno--;
 					nextTask();
@@ -1115,7 +1115,7 @@ function showRecallOverlay(id, rno) {
 	var html = "<p align='center'>";
 	html += ""+(rno+1)+"/"+experiment.recallcues.length+": please recall and enter the names of all buildings you have seen, <br/>";
 	if (startBuilding) {
-		html += "starting with <b style='color:green'>"+startBuilding+"</b>";
+		html += "starting with <b>"+startBuilding+"</b>";
 	}
 	else {
 		html += "starting with any building you want";
@@ -1125,35 +1125,11 @@ function showRecallOverlay(id, rno) {
 	html += "<br/><small>(The first word of each building name is enough; entering 'house' or 'shop' is optional).</small>";
 	html += "</p><br/>";
 	for (var i=0; i<N; i++) {
-		html += "<input id='recalled"+i+"' class='recallinp' onchange='checkRecallName(this)'/>";
+		html += "<input id='recalled"+i+"' class='recallinp'/>";
 	}
 	html += "<span class='clear:both'></span>";
 
 	$("#mapcanvas").html(html);
-}
-
-function checkRecallName(rinp) {
-	try {
-		var map = experiment.getMap();
-		var rname = rinp.value.toLowerCase().trim().split(" ")[0].split("'")[0];
-		var correct = false;
-		for (var i = 0; i < map.labels.length; i++) {
-			bname = map.labels[i].toLowerCase().trim().split(" ")[0].split("'")[0];
-			if (stringDifference(rname, bname) <= 2) {
-				correct = true;
-			}
-		}
-
-		if (correct)
-			rinp.style.border="1px solid green";
-		else
-			rinp.style.border="2px solid red";
-
-		if (rinp.id.charAt(rinp.id.length-1)==0 && experiment.recallcues[experiment.recallcueid-1] >= 0 && map.labels[experiment.recallcues[experiment.recallcueid-1]].toLowerCase().indexOf(rname) < 0)
-			rinp.style.border="2px solid red";
-	}
-	catch(ex) {
-	}
 }
 
 ////

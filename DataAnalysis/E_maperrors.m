@@ -110,11 +110,11 @@ subjcond(find(subjcond==3 & subjexpno == 4)) = 2; % color condition
 %  subjexpno = subjexpno(filter);
 
 w=1;
-scatter(subjreald(find(subjwithin==w)), subjd(find(subjwithin==w)) - subjreald(find(subjwithin==w)))
+scatter(subjreald(find(subjwithin==w)), abs(subjd(find(subjwithin==w)) - subjreald(find(subjwithin==w))))
 %scatter(subjd(find(subjwithin==w))./subjdratio(find(subjwithin==w)).*100, subjd(find(subjwithin==w))) % real distance
 hold on;
 w=0;
-scatter(subjreald(find(subjwithin==w)), subjd(find(subjwithin==w)) - subjreald(find(subjwithin==w)), 'r')
+scatter(subjreald(find(subjwithin==w)), abs(subjd(find(subjwithin==w)) - subjreald(find(subjwithin==w))), 'r')
 %scatter(subjd(find(subjwithin==w))./subjdratio(find(subjwithin==w)).*100, subjd(find(subjwithin==w)), 'r') % real distance
 
 err = subjd - subjreald;
