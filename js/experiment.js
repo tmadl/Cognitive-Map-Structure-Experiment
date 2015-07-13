@@ -23,11 +23,6 @@ function init() {
 
 	experiment = new Experiment();
 	experiment.sendLogToServer();
-	/*setTimeout(function() {
-		if (!experiment.running) {
-			experiment.run();
-		}
-	}, 20000); //!!! min. 10s*/
 }
 
 Experiment = function() {
@@ -64,7 +59,7 @@ Experiment = function() {
 
 	//var MINPATHLENGTH = 2000;
 
-	var RNDTASKS = Math.round(taskNumbersPerExperiment[3] / 2); //first N/3 tasks random for dec.b. exp
+	var RNDTASKS = Math.round(taskNumbersPerExperiment[3] / 2); //first N/2 tasks random for dec.b. exp; the rest calculated using active learning (see paper)
 
 	var SHOWDISTTASKS = Infinity; //show distance for first 5 tasks
 
@@ -73,13 +68,11 @@ Experiment = function() {
 			$("."+key).text(exp_properties[key]);
 		}
 		$("#distance").val("");
-		//$(".expno").text(exp_properties.expno); //!!!1
 		$(".expno").text(exp_properties.expno==exp_properties.max_expno?2:1);
 		$(".max_expno").text(2);
 	};
 
 	var condition;
-	//var DISTGROUPCOND = 2, REGCOND = 1, FUNCGROUPCOND=4, COLGROUPCOND=3;
 	var DISTGROUPCOND = 1, FUNCGROUPCOND=3, COLGROUPCOND=2;
 	this.exp2task = function() {
 		DISTJUDGMENTS = 4;
@@ -97,11 +90,7 @@ Experiment = function() {
 		if (condition == DISTGROUPCOND) {
 			map.groupedMap(groups);
 		}
-		/*else if (condition == REGCOND) { // regular, no sp. clusters
-			map.regularMap();
-		}*/
 		else { // equidistant, group by function or color
-			//if (fuel < 20 && condition==FUNCGROUPCOND) groups = 3; // ensure there is a petrol station when fuel is low
 			//cluster by color [c3] or function [c4]
 			map.regularMap(groups, condition==FUNCGROUPCOND);
 		}
@@ -140,8 +129,6 @@ Experiment = function() {
 
 		delivery_game = false;
 		// generate and store map of experiment 3 (two building clusters and one additional building to determine decision boundary)
-		//features = [Math.random()*0.6+0.2, Math.random()*0.6+0.2, Math.random()*0.6+0.2]; //always random
-
 		// additional building: random for the first max/2 trials, then use active learning
 		if (exp_properties.taskno <= RNDTASKS) {
 			//dist col fun
@@ -296,8 +283,6 @@ Experiment = function() {
 
 	var flashCongrats = function() {
 		swalert("Good job!", "You finished task "+exp_properties.taskno+" of experiment "+(exp_properties.expno==exp_properties.max_expno?2:1)+"!\n"+(taskNumbersPerExperiment[exp_properties.expno]-exp_properties.taskno) + " tasks remain in experiment "+(exp_properties.expno==exp_properties.max_expno?2:1)+"\n\nPress Enter to continue", "success");
-		//$("#instructions_center").hide();$("#blocker").show();$("#congrats").show();
-		//setTimeout('$("#instructions_center").show();$("#blocker").hide();$("#congrats").hide();lockPointer();', 2000);
 	};
 
 	var updateTaskInstruction = function() {
@@ -321,27 +306,9 @@ Experiment = function() {
 		else if (tsp_game) {
 			$(".tsp_task").show();
 		}
-		/*else if (estimate_task) {
-			var fixed_fromid = null;
-			if (exp_properties.expno == 3)
-				fixed_fromid = objects.length-1; //in exp 3, always ask distance to middle (dec.boundary) building
-
-			$("#from").show();
-			$("#to").show();
-			$(".estimate_task").show();
-			pair = getBuildingPairForDistanceEstimation(fixed_fromid);
-
-			fromid = pair[0];
-			toid = pair[1];
-			distEstAsked.push(pair);
-			distanceEstimation = [-1, fromid, toid, distEstTypes[cdistEst]]; //distance, from, to, type
-
-			//renderDistance();
-		}*/
 		else {
 			$(".remember_task").show();
 		}
-
 
 		if (memorize_task) {
 			$(".remember_task").show();
@@ -352,16 +319,6 @@ Experiment = function() {
 			else
 				$("#instructions_exp2a").show();
 		}
-		/*else if (estimate_task) { //distance estimations
-			try {
-				//$("#distance").attr('title', map.getDistance(fromid, toid)); //! //$("#distance").val(""); //!
-			} catch(e) {}
-			$("#distance").val('');
-			$("#from").text(map.labels[fromid]);
-			$("#to").text(map.labels[toid]);
-			$("#from").show();
-			$("#to").show();
-		}*/
 		else if (tsp_game) {
 			$("#from").hide();
 			$("#to").hide();
@@ -844,19 +801,6 @@ Experiment = function() {
 			}
 		}
 
-
-		/*
-		//if one map contains all elements except one, add that one to its own submap
-		if (mapstructure.length > 0 && mapstructure[0].length == items.length) { //map contains level id plus all items -> its length is number of items + 1
-			var map = mapstructure[0];
-			for (var i=0; i<items.length; i++) {
-				if (map.indexOf(items[i]) < 0) { // item not yet in map
-					mapstructure.push([items.length-2, items[i]]);
-					break;
-				}
-			}
-		}*/
-
 		return mapstructure;
 	};
 	this.onUse = function() {
@@ -873,7 +817,6 @@ Experiment = function() {
 			if (func.indexOf("gas") > -1 || fuel < 10) { // gas station - fill up
 				cash -= 100 - fuel;
 				fuel = 100;
-				//$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
 			}
 			else if (func.indexOf(supplier_category) > -1) { // supplier - get package
 				has_package_from = minid;
@@ -881,7 +824,6 @@ Experiment = function() {
 				$("#package").removeClass("package_empty");
 				$("#package").addClass("package");
 				$("#packagetxt").show();
-				//$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
 
 				objects[minid].children[1].material.color.setHex(0x000000);
 				objects[minid].children[2].material.color.setHex(0x000000);
@@ -891,8 +833,6 @@ Experiment = function() {
 				$("#package").addClass("package_empty");
 				$("#package").removeClass("package");
 				$("#packagetxt").hide();
-				//$(".deliver_task").hide();
-				//$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
 				cash += Math.round(Math.random()*(MAXCASHINCR-MINCASHINCR)) + MINCASHINCR;
 
 				objects[minid].children[1].material.color.setHex(0x000000);
@@ -902,7 +842,6 @@ Experiment = function() {
 			}
 			else if (tsp_game) {
 				// tsp - deliver package
-				//$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
 				cash += MINCASHINCR;
 				objects[minid].children[1].material.color.setHex(0x000000);
 				objects[minid].children[2].material.color.setHex(0x000000);
@@ -953,54 +892,6 @@ Experiment = function() {
 		var me = this;
 		setTimeout(function() {me.timerLoop()}, 1000);
 	};
-	/*this.timerLoop = function() {
-		if (exp_properties.expno == 4 && this.delivered >= objects.length) {
-			var mind = Infinity, minid = -1;
-			for (var i = 0; i < objects.length; i++) {
-				var d = getPointToEdgeDistance(controls.getObject(), objects[i]);
-				if (d < mind) {
-					mind = d;
-					minid = i;
-				}
-			}
-			var startbuilding = -1;
-			try {
-				startbuilding = data["exp"+exp_properties.expno]["task"+exp_properties.taskno].startbuilding;
-			}
-			catch (exc) {}
-			if (tsp_game && mind < 2*BUILDINGWIDTH && minid == startbuilding) {
-				$(".pressenter").css('color', '#00ff00');
-				delivered_to = minid;
-				$("#packagetxt").hide();
-			}
-		}
-
-		/*if (exp_properties.expno > 1) {
-			//use up fuel in exp 2 and 3
-			if (controls.moving)
-				fuel-=0.5;
-
-			if (fuel < 20) {
-				$("#statusbar").animate({opacity:0},200,"linear",function(){$(this).animate({opacity:1},200);});
-			}
-			if (fuel < 0) {
-				fuel = 0;
-				controls.v = controls.slow_v;
-			}
-			else {
-				controls.v = controls.default_v;
-			}
-
-			$("#fuellevel").width(fuel+"%");
-			var r = Math.round(255 * (1 - fuel/100)), g = 256*Math.round(255 * (fuel/100));
-			$("#fuellevel").css({background: intToCol(r)+intToCol(g).substring(1)+"00"});
-			$("#cashamount").text(cash + " $");
-		}* /
-		$("#cashamount").text(cash + " $");
-		//$("#cashamount").text(Math.round(controls.pathlength * DISTSCALE) + " m");
-		var me = this;
-		setTimeout(function() {me.timerLoop()}, 200);
-	};*/
 };
 
 ////

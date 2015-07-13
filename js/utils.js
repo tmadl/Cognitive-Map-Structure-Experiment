@@ -38,14 +38,14 @@ function arrayContains(arr1, arr2) {
 	for (var i = 0; i < arr1.length - arr2.length + 1; i++) {
 		var correct = 0;
 		for (var j = 0; j < arr2.length; j++) {
-			if (arr1[i+j] == arr2[j]) 
+			if (arr1[i+j] == arr2[j])
 				correct++;
 			else
 				break;
 		}
 		if (correct == arr2.length)
 			return true;
-	} 
+	}
 	return false;
 }
 
@@ -88,7 +88,7 @@ function shuffle(arr) {
 		var a = [];
 		for (var i=0; i<arr; i++) {
 			a.push(i);
-		}		
+		}
 		return shuffle(a);
 	}
 	else {
@@ -115,9 +115,9 @@ function normal_random(mean, variance) {
 
     X = Math.sqrt(-2 * Math.log(S) / S) * V1;
     X = mean + Math.sqrt(variance) * X;
-    
+
     if (isNaN(X)) return normal_random(mean, variance);
-    
+
     return X;
 }
 
@@ -143,7 +143,7 @@ function containsVector(mat, vec) {
 			if (mat[i][j] != vec[j]) {
 				c = false;
 				break;
-			} 
+			}
 		}
 		if (c) return true;
 	}
@@ -153,50 +153,30 @@ function containsVector(mat, vec) {
 
 if(typeof(String.prototype.trim) === "undefined")
 {
-    String.prototype.trim = function() 
+    String.prototype.trim = function()
     {
         return String(this).replace(/^\s+|\s+$/g, '');
     };
 }
 
-
-/*
-function stringDifference(str1, str2) {
-    var dist = 0;
- 
-    str1 = str1.trim().toLowerCase();
-    str2 = str2.trim().toLowerCase();
- 
- 	var L = Math.max(str1.length, str2.length);
-    for(var i = 0; i < L; i++) {
-        if(!str1[i] || !str2[i] || str2[i] !== str1[i]) {
-            dist++;
-        } 
-    }
- 
-    return dist;
-}
-*/
-
-
 function stringDifference(a, b) {
-  if(a.length === 0) return b.length; 
-  if(b.length === 0) return a.length; 
- 
+  if(a.length === 0) return b.length;
+  if(b.length === 0) return a.length;
+
   var matrix = [];
- 
+
   // increment along the first column of each row
   var i;
   for(i = 0; i <= b.length; i++){
     matrix[i] = [i];
   }
- 
+
   // increment each column in the first row
   var j;
   for(j = 0; j <= a.length; j++){
     matrix[0][j] = j;
   }
- 
+
   // Fill in the rest of the matrix
   for(i = 1; i <= b.length; i++){
     for(j = 1; j <= a.length; j++){
@@ -209,6 +189,6 @@ function stringDifference(a, b) {
       }
     }
   }
- 
+
   return matrix[b.length][a.length];
 };

@@ -5,7 +5,7 @@ var CAMERARANGE = FOGRANGE*1.25;
 var DEFBUILDINGHEIGHT = 50;
 var buildingheightpx = 286;
 var DISTSCALE = DEFBUILDINGHEIGHT/buildingheightpx; // correct for rendered (286) vs. subjective (50m) building height
-var buildingwidthpx = 150; 
+var buildingwidthpx = 150;
 var BUILDINGWIDTH = buildingwidthpx * DISTSCALE;
 var MINDIST = BUILDINGWIDTH*2; //minimum building distance
 
@@ -54,11 +54,6 @@ function setupScene() {
 	geometry = new THREE.PlaneGeometry( 15000, 15000, 100, 100 );
 	geometry.applyMatrix( new THREE.Matrix4().makeRotationX( - Math.PI / 2 ) );
 	material = new THREE.MeshBasicMaterial( { color: 0xAAAA99 } );
-		/*texture = THREE.ImageUtils.loadTexture( "models/asphalt.png" );
-		texture.wrapS = THREE.RepeatWrapping; 
-		texture.wrapT = THREE.RepeatWrapping;
-		texture.repeat.set( 100, 100); 
-		material = new THREE.MeshLambertMaterial( { map: texture } );*/
 
 	mesh = new THREE.Mesh( geometry, material );
 	scene.add( mesh );
@@ -70,16 +65,9 @@ function setupScene() {
 	renderer.setSize( window.innerWidth, window.innerHeight );
 
 	document.body.appendChild( renderer.domElement );
-	
-/*
-	stats = new Stats();
-	stats.domElement.style.position = 'absolute';
-	stats.domElement.style.bottom = '0px';
-	document.body.appendChild(stats.domElement);
-*/
-	//
+
 	window.addEventListener( 'resize', onWindowResize, false );
-	
+
 	//
 	animate();
 }
@@ -99,21 +87,19 @@ function animate() {
 	requestAnimationFrame( animate );
 
 	controls.update();
-	
-	//if (stats) stats.update();
 
 	renderer.render( scene, camera );
-	
+
 	if (experiment)
 		experiment.update();
 }
 
 function detectCollision() {
 	unlockAllDirection();
-	
+
 	var rotationMatrix;
 	var cameraDirection = controls.getDirection(new THREE.Vector3(0, 0, 0)).clone();
-	
+
 	if (controls.moveForward()) {
 		// Nothing to do!
 	}
@@ -130,25 +116,15 @@ function detectCollision() {
 		rotationMatrix.makeRotationY((360-90) * Math.PI / 180);
 	}
 	else return;
-	
+
 	if (rotationMatrix !== undefined){
 		cameraDirection.applyMatrix4(rotationMatrix);
 	}
-	
-	var rayCaster = new THREE.Raycaster(controls.getObject().position, cameraDirection);	
+
+	var rayCaster = new THREE.Raycaster(controls.getObject().position, cameraDirection);
 	var intersects = rayCaster.intersectObjects(objects, true); //accurate but slow
-	if (intersects.length > 0 && intersects[0].distance < 40) 
+	if (intersects.length > 0 && intersects[0].distance < 40)
 		lockDirection();
-	
-	/*//CD with bounding boxes
-	var cp = controls.getObject().position;
-	for (var i=0; i<boundingboxes.length; i++) {
-		b = boundingboxes[i];
-		if (cp.x >= b.min.x && cp.x <= b.max.x && cp.z >= b.min.z && cp.z <= b.max.z) {
-			lockDirection();
-			break;
-		}
-	}*/
 }
 
 function lockDirection() {
@@ -176,7 +152,7 @@ function unlockAllDirection(){
 function getBoundingBox(obj) {
 	var minX = Infinity, minY = Infinity, minZ = Infinity;
 	var maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
-	
+
 	obj.traverse (function (msh)
     {
         if (msh instanceof THREE.Mesh)
@@ -203,7 +179,7 @@ function getBoundingBox(obj) {
 function get3DText(str, zOffset, rotate) {
 	if (!zOffset) zOffset = 4;
 	if (!rotate) rotate = 0;
-		
+
 	var text3d = new THREE.TextGeometry( str, {
 		size: 0.4,
 		height: 0,
@@ -226,23 +202,18 @@ function get3DText(str, zOffset, rotate) {
 
 
 function setHouseColor(o, r, g, b) {
-	if (g && b) { 
+	if (g && b) {
 		o.children[0].children[1].material.color.setHex(65536*r+256*g+b);
 	}
 	else if (r) {
 		if (typeof r == "number")
 			o.children[0].children[1].material.color.setHex(r);
-		else 
+		else
 			o.children[0].children[1].material.color.setHex(65536*r[0]+256*r[1]+r[2]);
 	}
 	else {
 		o.children[0].children[1].material.color.setHex(0xffffff);
 	}
-	/*for (var i in o.children) {
-		if (o.children[i].material)
-			o.children[i].material.ambient.setRGB(255, 0, 0);
-		else setHouseColor(o.children[i], r, g, b);
-	}*/
 }
 
 var dollars = null;
@@ -253,7 +224,7 @@ function loadHouses() {
 		manager.onProgress = function ( item, loaded, total ) {
 			console.log( item, loaded, total );
 		};
-	
+
 		// model
 		var loader = new THREE.OBJMTLLoader();
 		var path = modelpath+housenames[i];
@@ -276,7 +247,7 @@ function loadHouses() {
 			});
 		}(i));
 	}
-	
+
 }
 
 // pointer lock
@@ -291,7 +262,7 @@ var instructions = document.getElementById( 'instructions_center' );
 var havePointerLock = 'pointerLockElement' in document || 'mozPointerLockElement' in document || 'webkitPointerLockElement' in document;
 if ( havePointerLock ) {
 	var element = document.body;
-	var pointerlockchange = function ( event ) {	
+	var pointerlockchange = function ( event ) {
 		if (!mapcanvasshown) {
 			if (document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element ) {
 				if (experiment.blocked) instructions.style.display = 'none';
@@ -357,17 +328,17 @@ $(document).on("keydown", function (e) {
 	if (sw) {
 		$(".confirm").click();
 	}
-	
+
 	v=$("#distance").val();
 	if (e.which === 8 && !$(e.target).is("input, textarea")) {
     	e.preventDefault();
-    	//if (controls.enabled) 
+    	//if (controls.enabled)
     	{ // help delete from distance judgment
 			$("#distance").val(v.substring(0, v.length-1));
 		}
 	}
 	else if (e.which >= '0'.charCodeAt(0) && e.which <= '9'.charCodeAt(0)  && !$(e.target).is("input, textarea")) {
-		//if (controls.enabled) 
+		//if (controls.enabled)
 		{ // pointer is locked; help enter distance judgment
 			$("#distance").val(v+String.fromCharCode(e.which));
 		}
@@ -378,11 +349,9 @@ $(document).on("keydown", function (e) {
 		experiment.onEnter();
 	}
 	else if (e.which == 69) {
-		//e.preventDefault();
-		//event.stopPropagation();
 		experiment.onUse();
-	}	
-	
+	}
+
 	sw = false;
 });
 
@@ -396,41 +365,3 @@ var sw = false;
 function swalert(str1, str2) {
 	setTimeout(function() {sw = true;swal(str1, str2?str2:"");}, 100);
 }
-
-/*
-
-//render axes
-
-		length = 100;
-	
-        var axes = new THREE.Object3D();
-
-        axes.add( buildAxis( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( length, 0, 0 ), 0xFF0000, false ) ); // +X
-        axes.add( buildAxis( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( -length, 0, 0 ), 0xFF0000, true) ); // -X
-        axes.add( buildAxis( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, length, 0 ), 0x00FF00, false ) ); // +Y
-        axes.add( buildAxis( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, -length, 0 ), 0x00FF00, true ) ); // -Y
-        axes.add( buildAxis( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, 0, length ), 0x0000FF, false ) ); // +Z
-        axes.add( buildAxis( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, 0, -length ), 0x0000FF, true ) ); // -Z
-        
-        scene.add(axes);
-
-function buildAxis( src, dst, colorHex, dashed ) {
-        var geom = new THREE.Geometry(),
-            mat; 
-
-        if(dashed) {
-                mat = new THREE.LineDashedMaterial({ linewidth: 3, color: colorHex, dashSize: 3, gapSize: 3 });
-        } else {
-                mat = new THREE.LineBasicMaterial({ linewidth: 3, color: colorHex });
-        }
-
-        geom.vertices.push( src.clone() );
-        geom.vertices.push( dst.clone() );
-        geom.computeLineDistances(); // This one is SUPER important, otherwise dashed lines will appear as simple plain lines
-
-        var axis = new THREE.Line( geom, mat, THREE.LinePieces );
-
-        return axis;
-
-}
-*/

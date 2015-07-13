@@ -81,10 +81,6 @@ Map = function() {
 			var pos = rndNotTooClose(this.building_coords, function() {return randomDist(DEFAULTDIST*2);}, null, BUILDINGWIDTH);
 			this.building_coords.push([pos[0], pos[1]]);
 
-			//TODO random map
-			//TODO 12 normal trials, 3 random trials (~30min)
-			//TODO predict rndmap clusterings from feature importances
-
 			if (i<=1) {
 				fid = i; //there must be at least one customer and supplier (for delivery game)
 			}
@@ -552,31 +548,6 @@ var rndNotTooClose = function(coords, rndFunctionX, rndFunctionY, mind) {
 	if (isNaN(x) || isNaN(y)) return rndNotTooClose(coords, rndFunctionX, rndFunctionY, mind);
 	return [x, y];
 };
-/*
-var rndGridClusters = function(gridsize, no_clusters) {
-	var cmap = [];
-	for (var i=0; i<gridsize; i++) {
-		cmap[i]=[];
-		for (var j=0; j<gridsize; j++) {
-			cmap[i][j]=0;
-		}
-	}
-
-	if (!no_clusters) return cmap;
-
-	var S = 2;
-	var xs = Math.round(Math.random()*(gridsize - S));
-	var ys = Math.round(Math.random()*(gridsize - S));
-	for (var i=0; i<gridsize; i++) {
-		for (var j=0; j<gridsize; j++) {
-			if (i >= xs && i < xs+S && j >= ys && j < ys+S) cmap[i][j]=1;
-			//else {
-			//	cmap[i][j]=2+Math.round(Math.random()*(no_clusters-2));
-			//}
-		}
-	}
-	return cmap;
-};*/
 
 //var coldist = function(col1, col2) {
 var moddist = function(c1, c2) {
