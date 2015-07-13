@@ -19,7 +19,7 @@ else {
 
 echo $id;
 
-$filename = "lognewC_".$id.".txt";
+$filename = "log_".$id.".txt";
 
 $log = $_REQUEST["log"];
 

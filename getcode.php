@@ -10,11 +10,11 @@ else {
 	die("");
 }
 
-$filename = "lognewC_".$id.".txt";
+$filename = "log_".$id.".txt";
 $size = filesize($filename);
 
 if ($size && $size > 8000) {
-	echo substr(md5("Cogmapbatch_recall"), 0, 10);
+	echo substr(md5("Cogmapbatch_recall"), 0, 10); //survey code, for Amazon Mechanical Turk
 }
 else {
 	die("");

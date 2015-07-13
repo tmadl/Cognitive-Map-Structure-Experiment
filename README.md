@@ -3,7 +3,7 @@ Browser-based experiment software for investigating human cognitive map structur
 
 ![logo](mapstructurelogo.png)
 
-Code for running psychological experiments in the browser, intended to investigate the structure of spatial memory. It has originally been written to facilitate a series of in-browser experiments by (Madl et al., submitted). It is made freely available here for academic (non-commercial) use. [Demo](http://madlnet.net/tsworks/experiment.html)
+Code for running 3D psychological experiments in the browser, intended to investigate the structure of spatial memory. It has originally been written to facilitate a series of in-browser experiments by (Madl et al., submitted). It is made freely available here for academic (non-commercial) use. [Demo](http://madlnet.net/tsworks/experiment.html)
 
 Citation
 --------
