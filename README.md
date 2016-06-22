@@ -10,4 +10,4 @@ Citation
 
 If you use this code in academic work, please cite: 
 
-Madl T., Franklin S., Chen K., Trappl R & Montaldi D., submitted. Exploring the structure of spatial representations. Cognitive Processing
+Madl T., Franklin S., Chen K., Trappl R & Montaldi D., 2016. Exploring the structure of spatial representations. PLoS ONE
